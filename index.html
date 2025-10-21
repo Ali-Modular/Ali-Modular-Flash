@@ -4,353 +4,93 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ali Modular — Firmware Updater</title>
+  <link rel="stylesheet" href="./styles.css" />
   <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#ea4a34">
-  <style>
-    :root{
-      --brand:#ea4a34; --brand-ink:#fff;
-      --bg:#0a0b0d; --bg-soft:#0e1117;
-      --fg:#e7edf3; --muted:#aab6c3;
-      --line:#1b2330; --card:#11161f;
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-      --radius:16px;
-    }
-    *{box-sizing:border-box}
-    html,body{
-      margin:0;padding:0;
-      background:linear-gradient(180deg,#0a0b0d 0%, #0b0e13 60%, #0d1016 100%);
-      color:var(--fg);
-      font:16px/1.45 "Futura","Futura PT","Avenir Next","Avenir",system-ui,-apple-system,"Segoe UI",Inter,Roboto,Arial,sans-serif;
-    }
-    a{color:var(--brand);text-decoration:none}
-    .wrap{max-width:1200px;margin:0 auto;padding:20px}
-
-    header{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
-    .logo{display:flex;align-items:center;gap:14px}
-    .logo img{height:42px;width:auto;display:block}
-    .logo h1{font-size:1.35rem;margin:0;letter-spacing:.2px}
-
-    .panel,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .card{padding:18px}
-
-    /* --- Two equal columns layout --- */
-    .columns{
-      display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start;
-    }
-    .col-left, .col-right{
-      display:grid; gap:22px; align-content:start; min-height:0;
-    }
-    /* Left column: connect on top, console flex-fills to align with right bottom */
-    .col-left{ grid-template-rows: auto 1fr; min-height:0; }
-
-    /* Connect card (top-left) */
-    .connect{padding:28px}
-    .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(234,74,52,.12);
-      border:1px solid rgba(234,74,52,.4); color:var(--brand); padding:6px 10px; border-radius:999px;
-      font-size:.85rem; margin-bottom:12px}
-    h2{font-size:1.8rem;margin:.2rem 0 .6rem 0}
-    p.lead{margin:.3rem 0 1rem 0;color:var(--muted)}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .btn{appearance:none;border:1px solid var(--line);background:var(--brand);color:var(--brand-ink);
-      padding:.8rem 1.1rem;border-radius:12px;font-weight:600;cursor:pointer;transition:.15s}
-    .btn:hover{transform:translateY(-1px);filter:saturate(1.05)}
-    .btn.ghost{background:transparent;color:var(--fg)}
-    .env{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);background:rgba(255,255,255,.02)}
-    .muted{color:var(--muted)}
-
-    /* Firmware card (top-right) */
-    label{font-size:.95rem;color:var(--muted)}
-    select,input[type="file"]{background:#0f141c;border:1px solid var(--line);color:var(--fg);
-      padding:.55rem .7rem;border-radius:10px}
-    details{background:#0f141c;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}
-    details summary{cursor:pointer;font-weight:600}
-    ul.notes{margin:.5rem 0 0 0;padding-left:18px}
-
-    /* Console fills the remaining height to align bottoms */
-    .console{display:flex;flex-direction:column;min-height:0}
-    .console-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 0 18px}
-    .console-title{margin:0;font-size:1.05rem}
-    pre#log{
-      margin:12px; border-top:1px solid var(--line); padding:14px 18px;
-      background:var(--bg-soft);
-      border-bottom-left-radius:var(--radius); border-bottom-right-radius:var(--radius);
-      white-space:pre-wrap; word-break:break-word;
-      /* Flex fill: */
-      flex:1; min-height:220px; max-height:100%; overflow:auto;
-    }
-    .btn.tiny{padding:.45rem .7rem;border-radius:10px}
-
-    footer{margin:26px 0;color:var(--muted);font-size:.9rem;text-align:center}
-
-    @media (max-width: 980px){
-      .columns{grid-template-columns:1fr}
-      .col-left{grid-template-rows:auto auto}
-    }
-  </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="logo">
-        <img src="./assets/Ali-Modular_Color-Alt-Transparent.png" alt="Ali Modular logo" />
-        <h1>Ali Modular — Firmware Updater</h1>
-      </div>
-      <nav>
-        <a href="https://alimodular.com" target="_blank" rel="noopener">alimodular.com</a>
-      </nav>
-    </header>
-
-    <!-- Two equal columns: top rows align; bottoms align -->
-    <section class="columns">
-      <!-- LEFT COLUMN -->
-      <div class="col-left">
-        <!-- Connect (top-left) -->
-        <div class="panel connect">
-          <span class="badge">DFU (Daisy Seed) via WebUSB</span>
-          <h2>Update your Esu’s Trifecta firmware</h2>
-          <p class="lead">Use Chrome or Edge on desktop over HTTPS. Put the module in <b>DFU</b>: hold <b>BOOT</b>, press <b>RESET</b>, release RESET, then release BOOT.</p>
-          <div class="row">
-            <button id="connectBtn" class="btn">Connect Device</button>
-            <button id="refreshBtn" class="btn ghost">Refresh Versions</button>
-            <span id="deviceInfo" class="muted"></span>
-          </div>
-          <div id="env" class="env"></div>
-        </div>
-
-        <!-- Console (fills down to align with right column end) -->
-        <div class="card console">
-          <div class="console-head">
-            <h3 class="console-title">Console</h3>
-            <div class="row">
-              <button id="clearLogBtn" class="btn tiny ghost">Clear</button>
-            </div>
-          </div>
-          <pre id="log" aria-live="polite"></pre>
-        </div>
-      </div>
-
-      <!-- RIGHT COLUMN -->
-      <div class="col-right">
-        <!-- Firmware (top-right) -->
-        <div class="card">
-          <h3>Firmware</h3>
-          <div class="row">
-            <label for="channel">Channel</label>
-            <select id="channel" aria-label="Firmware channel"></select>
-            <label for="version">Version</label>
-            <select id="version" aria-label="Firmware version"></select>
-          </div>
-          <details open>
-            <summary>Release notes</summary>
-            <ul id="notes" class="notes"></ul>
-          </details>
-          <div class="row" style="margin-top:12px">
-            <button id="flashBtn" class="btn" disabled>Flash Selected</button>
-            <span id="progressText" class="muted"></span>
-          </div>
-          <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-          <h3>Manual file</h3>
-          <p class="muted">Have a <code>.bin</code>? Flash it directly.</p>
-          <div class="row">
-            <input id="fileInput" type="file" accept=".bin,application/octet-stream" />
-            <button id="flashFileBtn" class="btn" disabled>Flash File</button>
-          </div>
-        </div>
-
-        <!-- How-To (same width as Firmware) -->
-        <div id="howto" class="card">
-          <h3>How-To</h3>
-          <ol>
-            <li>Enter DFU: hold <b>BOOT</b>, tap <b>RESET</b>, release RESET, then BOOT.</li>
-            <li>Click <b>Connect Device</b> → select <b>DFU in FS Mode</b>.</li>
-            <li>Pick a version → <b>Flash Selected</b>. Keep USB connected.</li>
-            <li>When finished, power-cycle the module.</li>
-          </ol>
-        </div>
-
-        <!-- Troubleshoot (same width; bottom aligns with console end) -->
-        <div id="troubleshoot" class="card">
-          <h3>Troubleshoot</h3>
-          <ul>
-            <li><b>Windows:</b> If the device doesn’t connect, install <i>WinUSB</i> for “DFU in FS Mode” using Zadig, then reconnect.</li>
-            <li><b>Browser:</b> Use Chrome/Edge over HTTPS. Safari/Firefox don’t support WebUSB.</li>
-            <li><b>USB:</b> Use a direct port and a data-capable cable (no hubs).</li>
-            <li><b>Stuck in DFU?</b> Power-cycle and retry.</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <footer>© 2025 Ali Modular · Flashing happens locally in your browser with WebUSB DFU.</footer>
+<header class="wrap">
+  <div class="brand">
+    <img src="./assets/logo.svg" alt="Ali Modular" />
+    <h1>Firmware Updater</h1>
   </div>
+  <nav>
+    <a href="#howto">How‑To</a>
+    <a href="#troubleshoot">Troubleshoot</a>
+    <a href="https://alimodular.com" target="_blank" rel="noopener">alimodular.com</a>
+  </nav>
+</header>
 
-  <!-- Load webdfu: keep your multi-CDN/local fallback if you installed it. Basic single source below: -->
-  <script src="https://cdn.jsdelivr.net/npm/webdfu@0.1.7/dist/webdfu.min.js" defer></script>
+<main class="wrap grid">
+  <section class="card">
+    <h2>1) Connect your Trifecta (Daisy Seed)</h2>
+    <p>Put the module in <b>DFU mode</b>: hold <b>BOOT</b>, press <b>RESET</b>, release RESET, then release BOOT. In DFU mode it will enumerate as <b>DFU in FS Mode</b>.</p>
+    <div class="env" id="env"></div>
+    <div class="row gap">
+      <button id="connectBtn">Connect Device</button>
+      <div id="deviceInfo" class="muted"></div>
+    </div>
+  </section>
 
-  <script>
-  (function () {
-    const $ = (sel) => document.querySelector(sel);
-    const logEl = $("#log");
-    const MAX_LOG_LINES = 250;
+  <section class="card">
+    <h2>2) Choose a firmware</h2>
+    <div class="row gap">
+      <label for="channel">Channel</label>
+      <select id="channel"></select>
+      <label for="version">Version</label>
+      <select id="version"></select>
+      <button id="refreshBtn" class="ghost">Refresh</button>
+    </div>
+    <details class="notes" id="notesBox">
+      <summary>Release notes</summary>
+      <ul id="notes"></ul>
+    </details>
+    <div class="row gap">
+      <button id="flashBtn" disabled>Flash Selected</button>
+      <span id="progressText" class="muted"></span>
+    </div>
+  </section>
 
-    function clampLog() {
-      const lines = logEl.textContent.split("\\n");
-      if (lines.length > MAX_LOG_LINES) {
-        logEl.textContent = lines.slice(-MAX_LOG_LINES).join("\\n");
-      }
-    }
-    function log(msg){
-      const ts=new Date().toLocaleTimeString();
-      logEl.textContent += "["+ts+"] "+msg+"\\n";
-      clampLog();
-      logEl.scrollTop = logEl.scrollHeight;
-    }
+  <section class="card">
+    <h2>Manual file</h2>
+    <p>If you were given a <code>.bin</code> file, you can flash it directly.</p>
+    <div class="row gap">
+      <input id="fileInput" type="file" accept=".bin,application/octet-stream" />
+      <button id="flashFileBtn" disabled>Flash File</button>
+    </div>
+  </section>
 
-    const envEl=$("#env"), connectBtn=$("#connectBtn"), deviceInfo=$("#deviceInfo");
-    const channelSel=$("#channel"), versionSel=$("#version"), refreshBtn=$("#refreshBtn");
-    const notesUl=$("#notes"), flashBtn=$("#flashBtn");
-    const fileInput=$("#fileInput"), flashFileBtn=$("#flashFileBtn");
-    const progressText=$("#progressText");
-    const clearLogBtn=$("#clearLogBtn");
+  <section id="howto" class="card">
+    <h2>How‑To</h2>
+    <ol>
+      <li>Enter DFU mode: hold <b>BOOT</b>, tap <b>RESET</b>, release RESET then BOOT.</li>
+      <li>Click <b>Connect Device</b> and select <b>DFU in FS Mode</b>.</li>
+      <li>Pick a version and click <b>Flash Selected</b>. Keep USB connected until complete.</li>
+      <li>When finished, power‑cycle the module.</li>
+    </ol>
+  </section>
 
-    clearLogBtn.addEventListener("click", ()=>{ logEl.textContent=""; });
+  <section id="troubleshoot" class="card">
+    <h2>Troubleshooting</h2>
+    <ul>
+      <li><b>Windows:</b> If the device doesn’t connect, install the <i>WinUSB</i> driver for “DFU in FS Mode” using Zadig. Choose the device in the dropdown, set driver to WinUSB, click <i>Install Driver</i>. Then try Connect again.</li>
+      <li><b>Browser:</b> WebUSB works on Chrome/Edge over HTTPS. If you’re on Safari/Firefox, switch to Chrome or use the SD/USB update method (if applicable).</li>
+      <li><b>USB:</b> Use a direct USB port (no hubs), and a data‑capable cable.</li>
+      <li><b>Stuck in DFU:</b> Power‑cycle the module. If problems persist, re‑flash.</li>
+    </ul>
+  </section>
 
-    const supportsWebUSB = !!navigator.usb;
-    envEl.textContent = supportsWebUSB
-      ? "✅ WebUSB available (Chrome or Edge over HTTPS)."
-      : "⚠️ WebUSB not available. Use Chrome/Edge on desktop over HTTPS.";
+  <section class="card">
+    <h2>Console</h2>
+    <pre id="log" class="log"></pre>
+  </section>
+</main>
 
-    window.addEventListener("load", () => {
-      if (!window.dfu) {
-        envEl.innerHTML = "❌ <b>webdfu</b> failed to load. Check network/HTTPS.";
-        log("webdfu not loaded.");
-      }
-    });
+<footer class="wrap muted small">
+  <p>© 2025 Ali Modular. Web flasher uses WebUSB DFU via <code>webdfu</code>. Your firmware files and checksums are never uploaded — flashing happens entirely in your browser.</p>
+</footer>
 
-    // Manifest
-    let manifest = null;
-    async function loadManifest() {
-      try {
-        const res = await fetch("./manifest.json", { cache: "no-store" });
-        if (!res.ok) throw new Error("manifest.json not found ("+res.status+")");
-        manifest = await res.json();
-
-        // Populate channels
-        channelSel.innerHTML = "";
-        const chDefault = manifest.default_channel || "stable";
-        Object.keys(manifest.channels||{}).forEach(ch=>{
-          const opt=document.createElement("option");
-          opt.value=ch; opt.textContent=ch;
-          if (ch===chDefault) opt.selected=true;
-          channelSel.appendChild(opt);
-        });
-        populateVersions();
-        log("Manifest loaded.");
-      } catch (e) {
-        log("ERROR: "+e.message+" — Ensure manifest.json is beside index.html.");
-      }
-    }
-    function populateVersions() {
-      versionSel.innerHTML = "";
-      const ch = channelSel.value;
-      const list = (manifest.channels && manifest.channels[ch]) || [];
-      list.forEach((fw, idx)=>{
-        const opt = document.createElement("option");
-        opt.value = idx;
-        opt.textContent = fw.version; // ONLY version text (no notes in dropdown)
-        versionSel.appendChild(opt);
-      });
-      updateNotes();
-    }
-    function updateNotes() {
-      notesUl.innerHTML = "";
-      const ch = channelSel.value;
-      const idx = parseInt(versionSel.value || "0", 10);
-      const fw = ((manifest.channels||{})[ch]||[])[idx];
-      if (!fw) return;
-      (fw.notes||[]).forEach(n=>{
-        const li=document.createElement("li"); li.textContent=n; notesUl.appendChild(li);
-      });
-    }
-    channelSel.addEventListener("change", populateVersions);
-    versionSel.addEventListener("change", updateNotes);
-    refreshBtn.addEventListener("click", loadManifest);
-
-    // DFU
-    let usbDevice=null, dfuDevice=null;
-
-    connectBtn.addEventListener("click", async ()=>{
-      try{
-        if (!window.dfu) throw new Error("webdfu not loaded");
-        const filters = [{ vendorId: 0x0483 }]; // STMicro (0483:DF11 common for Daisy DFU)
-        usbDevice = await navigator.usb.requestDevice({ filters });
-        await usbDevice.open();
-
-        dfuDevice = await dfu.findDevice(usbDevice);
-        if (!dfuDevice) throw new Error("DFU interface not found. Is the device in DFU mode?");
-        await dfuDevice.open();
-
-        const info = await dfuDevice.getInfo();
-        deviceInfo.textContent = "Connected: " + (usbDevice.productName || "USB Device") +
-          " (Transfer Size " + info.transferSize + " bytes)";
-        log("Connected " + (usbDevice.productName||"") + " — DFU alts: " + dfuDevice.interfaces.map(i=>i.name).join(", "));
-        flashBtn.disabled=false;
-        flashFileBtn.disabled = !fileInput.files?.length ? true : false;
-      }catch(e){ log("ERROR connecting: "+e.message); }
-    });
-
-    async function flashArrayBuffer(buf){
-      if (!dfuDevice) throw new Error("No DFU device");
-      progressText.textContent="Preparing...";
-      const data=new Uint8Array(buf);
-      const intf = dfuDevice.interfaces[0];
-      await dfuDevice.claimInterface(intf.interfaceNumber);
-      await dfuDevice.selectAlternate(intf.interfaceNumber, 0);
-      const xfer=(written,total)=>{ const pct=Math.floor((written/total)*100);
-        progressText.textContent="Writing "+pct+"% ("+written+"/"+total+")"; };
-
-      await dfuDevice.download(0, data, xfer);
-      progressText.textContent="Finalizing...";
-      await dfuDevice.manifest();
-      progressText.textContent="Done. If the device doesn't reboot, power-cycle it.";
-      log("Flash complete.");
-    }
-
-    flashBtn.addEventListener("click", async ()=>{
-      try{
-        if (!manifest) throw new Error("Manifest not loaded");
-        const ch = channelSel.value;
-        const idx = parseInt(versionSel.value||"0",10);
-        const fw = ((manifest.channels||{})[ch]||[])[idx];
-        if (!fw) throw new Error("No firmware selected");
-
-        log("Downloading "+fw.file+" ...");
-        const res = await fetch("./"+fw.file, { cache: "no-store" });
-        if (!res.ok) throw new Error("Firmware file not found ("+res.status+")");
-        const buf = await res.arrayBuffer();
-
-        if (fw.sha256){
-          const hash=await crypto.subtle.digest("SHA-256", buf);
-          const hex=Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,"0")).join("");
-          if (hex.toLowerCase() !== fw.sha256.toLowerCase()) throw new Error("Checksum mismatch. Download may be corrupted.");
-          log("Checksum OK.");
-        }
-        await flashArrayBuffer(buf);
-      }catch(e){ progressText.textContent=""; log("ERROR flashing: "+e.message); }
-    });
-
-    fileInput.addEventListener("change",()=>{ flashFileBtn.disabled = !fileInput.files?.length || !dfuDevice; });
-    flashFileBtn.addEventListener("click", async ()=>{
-      try{
-        const f=fileInput.files?.[0]; if(!f) return;
-        log("Reading "+f.name+" ...");
-        const buf=await f.arrayBuffer();
-        await flashArrayBuffer(buf);
-      }catch(e){ progressText.textContent=""; log("ERROR flashing file: "+e.message); }
-    });
-
-    loadManifest();
-  })();
-  </script>
+<!-- WebDFU library (browser global "dfu") -->
+<script src="https://unpkg.com/webdfu@0.1.7/dist/webdfu.min.js"></script>
+<script src="./app.js"></script>
 </body>
 </html>
