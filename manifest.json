@@ -10,9 +10,8 @@
         "size_bytes": 524288,
         "sha256": "",
         "notes": [
-          "Added CERN granular processor",
-          "Added Limiter",
-          "Reverse Delay now clock\u2011syncable"
+          "Bugfixes and performance improvements"
+  
         ]
       }
     ],
@@ -24,7 +23,9 @@
         "size_bytes": 540672,
         "sha256": "",
         "notes": [
-          "Bugfixes and performance improvements"
+          "Added CERN granular processor",
+          "Added Limiter",
+          "Reverse Delay now clock\u2011syncable"
         ]
       }
     ]
