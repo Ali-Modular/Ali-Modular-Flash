@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ali Modular — Firmware Updater</title>
+  <title>Ali Modular Firmware Updater</title>
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#ea4a34">
   <style>
@@ -20,7 +20,6 @@
       margin:0;padding:0;
       background:linear-gradient(180deg,#0a0b0d 0%, #0b0e13 60%, #0d1016 100%);
       color:var(--fg);
-      /* Futura with sensible fallbacks */
       font:16px/1.45 "Futura","Futura PT","Avenir Next","Avenir",system-ui,-apple-system,"Segoe UI",Inter,Roboto,Arial,sans-serif;
     }
     a{color:var(--brand);text-decoration:none}
@@ -63,7 +62,7 @@
     details summary{cursor:pointer;font-weight:600}
     ul.notes{margin:.5rem 0 0 0;padding-left:18px}
 
-    /* Console (fixed-size, never grows) */
+    /* Console (fixed-size) */
     .console{padding:0; display:flex; flex-direction:column;}
     .console-header{display:flex; align-items:center; justify-content:space-between; padding:18px 18px 0 18px}
     .console-title{margin:0;font-size:1.05rem}
@@ -91,6 +90,7 @@
         <h1>Ali Modular — Firmware Updater</h1>
       </div>
       <nav>
+        <!-- Only your site link in header -->
         <a href="https://alimodular.com" target="_blank" rel="noopener">alimodular.com</a>
       </nav>
     </header>
@@ -135,7 +135,7 @@
       </div>
     </section>
 
-    <!-- Body -->
+    <!-- Body: Console + Guides (RESTORED) -->
     <section class="grid">
       <div class="card console">
         <div class="console-header">
@@ -145,6 +145,28 @@
           </div>
         </div>
         <pre id="log" aria-live="polite"></pre>
+      </div>
+
+      <div>
+        <div id="howto" class="card">
+          <h3>How-To</h3>
+          <ol>
+            <li>Enter DFU: hold <b>BOOT</b>, tap <b>RESET</b>, release RESET, then BOOT.</li>
+            <li>Click <b>Connect Device</b> → select <b>DFU in FS Mode</b>.</li>
+            <li>Pick a version → <b>Flash Selected</b>. Keep USB connected.</li>
+            <li>When finished, power-cycle the module.</li>
+          </ol>
+        </div>
+
+        <div id="troubleshoot" class="card" style="margin-top:22px">
+          <h3>Troubleshoot</h3>
+          <ul>
+            <li><b>Windows:</b> If the device doesn’t connect, install <i>WinUSB</i> for “DFU in FS Mode” using Zadig, then reconnect.</li>
+            <li><b>Browser:</b> Use Chrome/Edge over HTTPS. Safari/Firefox don’t support WebUSB.</li>
+            <li><b>USB:</b> Use a direct port and a data-capable cable (no hubs).</li>
+            <li><b>Stuck in DFU?</b> Power-cycle and retry.</li>
+          </ul>
+        </div>
       </div>
     </section>
 
@@ -241,7 +263,7 @@
     }
     channelSel.addEventListener("change", populateVersions);
     versionSel.addEventListener("change", updateNotes);
-    refreshBtn.addEventListener("click", () => { loadManifest(); });
+    refreshBtn.addEventListener("click", loadManifest);
 
     // DFU plumbing
     let usbDevice=null, dfuDevice=null;
