@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ali Modular — Firmware Updater</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <meta name="color-scheme" content="dark light">
+</head>
+<body>
+<header class="wrap">
+  <div class="brand">
+    <img src="./assets/logo.svg" alt="Ali Modular" />
+    <h1>Firmware Updater</h1>
+  </div>
+  <nav>
+    <a href="#howto">How‑To</a>
+    <a href="#troubleshoot">Troubleshoot</a>
+    <a href="https://alimodular.com" target="_blank" rel="noopener">alimodular.com</a>
+  </nav>
+</header>
+
+<main class="wrap grid">
+  <section class="card">
+    <h2>1) Connect your Trifecta (Daisy Seed)</h2>
+    <p>Put the module in <b>DFU mode</b>: hold <b>BOOT</b>, press <b>RESET</b>, release RESET, then release BOOT. In DFU mode it will enumerate as <b>DFU in FS Mode</b>.</p>
+    <div class="env" id="env"></div>
+    <div class="row gap">
+      <button id="connectBtn">Connect Device</button>
+      <div id="deviceInfo" class="muted"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2) Choose a firmware</h2>
+    <div class="row gap">
+      <label for="channel">Channel</label>
+      <select id="channel"></select>
+      <label for="version">Version</label>
+      <select id="version"></select>
+      <button id="refreshBtn" class="ghost">Refresh</button>
+    </div>
+    <details class="notes" id="notesBox">
+      <summary>Release notes</summary>
+      <ul id="notes"></ul>
+    </details>
+    <div class="row gap">
+      <button id="flashBtn" disabled>Flash Selected</button>
+      <span id="progressText" class="muted"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Manual file</h2>
+    <p>If you were given a <code>.bin</code> file, you can flash it directly.</p>
+    <div class="row gap">
+      <input id="fileInput" type="file" accept=".bin,application/octet-stream" />
+      <button id="flashFileBtn" disabled>Flash File</button>
+    </div>
+  </section>
+
+  <section id="howto" class="card">
+    <h2>How‑To</h2>
+    <ol>
+      <li>Enter DFU mode: hold <b>BOOT</b>, tap <b>RESET</b>, release RESET then BOOT.</li>
+      <li>Click <b>Connect Device</b> and select <b>DFU in FS Mode</b>.</li>
+      <li>Pick a version and click <b>Flash Selected</b>. Keep USB connected until complete.</li>
+      <li>When finished, power‑cycle the module.</li>
+    </ol>
+  </section>
+
+  <section id="troubleshoot" class="card">
+    <h2>Troubleshooting</h2>
+    <ul>
+      <li><b>Windows:</b> If the device doesn’t connect, install the <i>WinUSB</i> driver for “DFU in FS Mode” using Zadig. Choose the device in the dropdown, set driver to WinUSB, click <i>Install Driver</i>. Then try Connect again.</li>
+      <li><b>Browser:</b> WebUSB works on Chrome/Edge over HTTPS. If you’re on Safari/Firefox, switch to Chrome or use the SD/USB update method (if applicable).</li>
+      <li><b>USB:</b> Use a direct USB port (no hubs), and a data‑capable cable.</li>
+      <li><b>Stuck in DFU:</b> Power‑cycle the module. If problems persist, re‑flash.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Console</h2>
+    <pre id="log" class="log"></pre>
+  </section>
+</main>
+
+<footer class="wrap muted small">
+  <p>© 2025 Ali Modular. Web flasher uses WebUSB DFU via <code>webdfu</code>. Your firmware files and checksums are never uploaded — flashing happens entirely in your browser.</p>
+</footer>
+
+<!-- WebDFU library (browser global "dfu") -->
+<script src="https://unpkg.com/webdfu@0.1.7/dist/webdfu.min.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>

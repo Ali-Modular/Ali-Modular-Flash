@@ -1,0 +1,32 @@
+{
+  "product": "Esu's Trifecta",
+  "default_channel": "stable",
+  "channels": {
+    "stable": [
+      {
+        "version": "1.14.0",
+        "date": "2025-10-20",
+        "file": "EsusTrifecta_1.14.bin",
+        "size_bytes": 524288,
+        "sha256": "",
+        "notes": [
+          "Added CERN granular processor",
+          "Added Limiter",
+          "Reverse Delay now clock\u2011syncable"
+        ]
+      }
+    ],
+    "beta": [
+      {
+        "version": "1.15-beta",
+        "date": "2025-10-28",
+        "file": "EsusTrifecta_1.15_beta.bin",
+        "size_bytes": 540672,
+        "sha256": "",
+        "notes": [
+          "Bugfixes and performance improvements"
+        ]
+      }
+    ]
+  }
+}
