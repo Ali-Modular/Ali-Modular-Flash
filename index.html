@@ -8,22 +8,24 @@
   <meta name="theme-color" content="#ea4a34">
   <style>
     :root{
-      /* Brand */
-      --brand:#ea4a34;           /* pulled from your logo */
-      --brand-ink:#ffffff;
-      /* UI */
+      --brand:#ea4a34; --brand-ink:#fff;
       --bg:#0a0b0d; --bg-soft:#0e1117;
       --fg:#e7edf3; --muted:#aab6c3;
-      --line:#1b2330; --card:#11161f; --card-ink:#dfe7ef;
-      --ok:#33d17a; --warn:#f5c451; --err:#ff6b6b;
+      --line:#1b2330; --card:#11161f;
       --shadow:0 10px 30px rgba(0,0,0,.35);
       --radius:16px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:linear-gradient(180deg,#0a0b0d 0%, #0b0e13 60%, #0d1016 100%);color:var(--fg);
-      font:16px/1.45 system-ui,-apple-system,"Segoe UI",Inter,Roboto,Arial,sans-serif}
+    html,body{
+      margin:0;padding:0;
+      background:linear-gradient(180deg,#0a0b0d 0%, #0b0e13 60%, #0d1016 100%);
+      color:var(--fg);
+      /* Futura with sensible fallbacks */
+      font:16px/1.45 "Futura","Futura PT","Avenir Next","Avenir",system-ui,-apple-system,"Segoe UI",Inter,Roboto,Arial,sans-serif;
+    }
     a{color:var(--brand);text-decoration:none}
     .wrap{max-width:1200px;margin:0 auto;padding:20px}
+
     /* Header */
     header{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
     .logo{display:flex;align-items:center;gap:14px}
@@ -31,6 +33,7 @@
     .logo h1{font-size:1.35rem;margin:0;letter-spacing:.2px}
     nav a{margin-left:18px;opacity:.9}
     nav a:hover{opacity:1}
+
     /* Hero */
     .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:center;margin-top:8px}
     .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
@@ -44,9 +47,11 @@
       padding:.8rem 1.1rem;border-radius:12px;font-weight:600;cursor:pointer;transition:.15s}
     .btn:hover{transform:translateY(-1px);filter:saturate(1.05)}
     .btn.ghost{background:transparent;color:var(--fg)}
+    .btn.tiny{padding:.45rem .7rem;font-weight:600;border-radius:10px}
     .env{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);background:rgba(255,255,255,.02)}
     .muted{color:var(--muted)}
-    /* Two-column body */
+
+    /* Body grid */
     .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;margin-top:22px}
     .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
     h3{margin:.2rem 0 1rem 0;font-size:1.15rem}
@@ -57,21 +62,23 @@
     details{background:#0f141c;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}
     details summary{cursor:pointer;font-weight:600}
     ul.notes{margin:.5rem 0 0 0;padding-left:18px}
-    /* Console */
-    .console{padding:0}
-    .console h3{padding:18px 18px 0 18px}
-    pre#log{margin:12px;border-top:1px solid var(--line);padding:14px 18px;height:320px;overflow:auto;
-      background:var(--bg-soft);border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius)}
-    /* How-to / Troubleshoot */
-    .stack{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:22px}
-    ol{margin:0;padding-left:18px}
-    /* Footer */
-    footer{margin:26px 0;color:var(--muted);font-size:.9rem}
-    /* Responsive */
+
+    /* Console (fixed-size, never grows) */
+    .console{padding:0; display:flex; flex-direction:column;}
+    .console-header{display:flex; align-items:center; justify-content:space-between; padding:18px 18px 0 18px}
+    .console-title{margin:0;font-size:1.05rem}
+    pre#log{
+      margin:12px; border-top:1px solid var(--line); padding:14px 18px;
+      height:320px; max-height:320px; overflow:auto; background:var(--bg-soft);
+      border-bottom-left-radius:var(--radius); border-bottom-right-radius:var(--radius);
+      white-space:pre-wrap; word-break:break-word;
+    }
+
+    footer{margin:26px 0;color:var(--muted);font-size:.9rem;text-align:center}
+
     @media (max-width: 980px){
       .hero{grid-template-columns:1fr}
       .grid{grid-template-columns:1fr}
-      .stack{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -84,8 +91,6 @@
         <h1>Ali Modular — Firmware Updater</h1>
       </div>
       <nav>
-        <a href="#howto">How-To</a>
-        <a href="#troubleshoot">Troubleshoot</a>
         <a href="https://alimodular.com" target="_blank" rel="noopener">alimodular.com</a>
       </nav>
     </header>
@@ -130,39 +135,20 @@
       </div>
     </section>
 
-    <!-- Body: Console + Guides -->
+    <!-- Body -->
     <section class="grid">
       <div class="card console">
-        <h3>Console</h3>
+        <div class="console-header">
+          <h3 class="console-title">Console</h3>
+          <div class="row">
+            <button id="clearLogBtn" class="btn tiny ghost" title="Clear console">Clear</button>
+          </div>
+        </div>
         <pre id="log" aria-live="polite"></pre>
-      </div>
-
-      <div>
-        <div id="howto" class="card">
-          <h3>How-To</h3>
-          <ol>
-            <li>Enter DFU: hold <b>BOOT</b>, tap <b>RESET</b>, release RESET, then BOOT.</li>
-            <li>Click <b>Connect Device</b> → select <b>DFU in FS Mode</b>.</li>
-            <li>Pick a version → <b>Flash Selected</b>. Keep USB connected.</li>
-            <li>When finished, power-cycle the module.</li>
-          </ol>
-        </div>
-
-        <div id="troubleshoot" class="card" style="margin-top:22px">
-          <h3>Troubleshoot</h3>
-          <ul>
-            <li><b>Windows:</b> If the device doesn’t connect, install <i>WinUSB</i> for “DFU in FS Mode” using Zadig, then reconnect.</li>
-            <li><b>Browser:</b> Use Chrome/Edge over HTTPS. Safari/Firefox don’t support WebUSB.</li>
-            <li><b>USB:</b> Use a direct port and a data-capable cable (no hubs).</li>
-            <li><b>Stuck in DFU?</b> Power-cycle and retry.</li>
-          </ul>
-        </div>
       </div>
     </section>
 
-    <footer>
-      © 2025 Ali Modular · Flashing happens locally in your browser with WebUSB DFU.
-    </footer>
+    <footer>© 2025 Ali Modular · Flashing happens locally in your browser with WebUSB DFU.</footer>
   </div>
 
   <!-- WebDFU library (browser global "dfu") -->
@@ -172,13 +158,29 @@
   (function () {
     const $ = (sel) => document.querySelector(sel);
     const logEl = $("#log");
-    function log(msg){ const ts=new Date().toLocaleTimeString(); logEl.textContent += "["+ts+"] "+msg+"\\n"; logEl.scrollTop = logEl.scrollHeight; }
+    const MAX_LOG_LINES = 250;
+
+    function clampLog() {
+      const lines = logEl.textContent.split("\\n");
+      if (lines.length > MAX_LOG_LINES) {
+        logEl.textContent = lines.slice(-MAX_LOG_LINES).join("\\n");
+      }
+    }
+    function log(msg){
+      const ts=new Date().toLocaleTimeString();
+      logEl.textContent += "["+ts+"] "+msg+"\\n";
+      clampLog();
+      logEl.scrollTop = logEl.scrollHeight;
+    }
 
     const envEl=$("#env"), connectBtn=$("#connectBtn"), deviceInfo=$("#deviceInfo");
     const channelSel=$("#channel"), versionSel=$("#version"), refreshBtn=$("#refreshBtn");
     const notesUl=$("#notes"), flashBtn=$("#flashBtn");
     const fileInput=$("#fileInput"), flashFileBtn=$("#flashFileBtn");
     const progressText=$("#progressText");
+    const clearLogBtn=$("#clearLogBtn");
+
+    clearLogBtn.addEventListener("click", ()=>{ logEl.textContent=""; });
 
     const supportsWebUSB = !!navigator.usb;
     envEl.textContent = supportsWebUSB
@@ -186,7 +188,10 @@
       : "⚠️ WebUSB not available. Use Chrome/Edge on desktop over HTTPS.";
 
     window.addEventListener("load", () => {
-      if (!window.dfu) { envEl.innerHTML = "❌ <b>webdfu</b> failed to load. Check network/HTTPS."; log("webdfu not loaded."); }
+      if (!window.dfu) {
+        envEl.innerHTML = "❌ <b>webdfu</b> failed to load. Check network/HTTPS.";
+        log("webdfu not loaded.");
+      }
     });
 
     // Manifest
@@ -236,7 +241,7 @@
     }
     channelSel.addEventListener("change", populateVersions);
     versionSel.addEventListener("change", updateNotes);
-    refreshBtn.addEventListener("click", loadManifest);
+    refreshBtn.addEventListener("click", () => { loadManifest(); });
 
     // DFU plumbing
     let usbDevice=null, dfuDevice=null;
@@ -311,6 +316,7 @@
       }catch(e){ progressText.textContent=""; log("ERROR flashing file: "+e.message); }
     });
 
+    // Kick off
     loadManifest();
   })();
   </script>
