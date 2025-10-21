@@ -4,8 +4,39 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ali Modular — Firmware Updater</title>
-  <link rel="stylesheet" href="./styles.css" />
   <meta name="color-scheme" content="dark light">
+  <style>
+    :root{
+      --bg:#0a0b0d; --fg:#eaeef2; --muted:#b5bdc9; --brand:#f5a524;
+      --card:#111319; --line:#1b1f2a;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);
+      font:16px/1.45 system-ui,-apple-system,'Segoe UI',Roboto,Inter,Arial,sans-serif}
+    a{color:var(--brand);text-decoration:none}
+    .wrap{max-width:1040px;margin:0 auto;padding:16px}
+    header.wrap{display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand img{height:36px}
+    h1{font-size:1.4rem;margin:0}
+    nav a{margin-left:16px;opacity:.9}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 16px rgba(0,0,0,.25)}
+    h2{margin-top:0;font-size:1.2rem}
+    .row{display:flex;align-items:center}
+    .gap{gap:12px;flex-wrap:wrap}
+    button{background:#161a22;border:1px solid var(--line);color:var(--fg);padding:.6rem 1rem;border-radius:10px;cursor:pointer;transition:.15s}
+    button:hover{transform:translateY(-1px)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    button.ghost{background:transparent}
+    .env{padding:8px 12px;border:1px dashed var(--line);border-radius:10px;margin:.5rem 0;font-size:.95rem}
+    .muted{color:var(--muted)}
+    .small{font-size:.9rem}
+    .notes{margin-top:.5rem}
+    .log{height:220px;overflow:auto;background:#0b0d12;border:1px solid var(--line);border-radius:10px;padding:12px}
+    code{background:#0d1117;border:1px solid #232a38;border-radius:6px;padding:.1rem .35rem}
+    .err{color:#ff6b6b}
+  </style>
 </head>
 <body>
 <header class="wrap">
@@ -14,7 +45,7 @@
     <h1>Firmware Updater</h1>
   </div>
   <nav>
-    <a href="#howto">How‑To</a>
+    <a href="#howto">How-To</a>
     <a href="#troubleshoot">Troubleshoot</a>
     <a href="https://alimodular.com" target="_blank" rel="noopener">alimodular.com</a>
   </nav>
@@ -40,7 +71,7 @@
       <select id="version"></select>
       <button id="refreshBtn" class="ghost">Refresh</button>
     </div>
-    <details class="notes" id="notesBox">
+    <details class="notes" id="notesBox" open>
       <summary>Release notes</summary>
       <ul id="notes"></ul>
     </details>
@@ -60,12 +91,12 @@
   </section>
 
   <section id="howto" class="card">
-    <h2>How‑To</h2>
+    <h2>How-To</h2>
     <ol>
       <li>Enter DFU mode: hold <b>BOOT</b>, tap <b>RESET</b>, release RESET then BOOT.</li>
       <li>Click <b>Connect Device</b> and select <b>DFU in FS Mode</b>.</li>
       <li>Pick a version and click <b>Flash Selected</b>. Keep USB connected until complete.</li>
-      <li>When finished, power‑cycle the module.</li>
+      <li>When finished, power-cycle the module.</li>
     </ol>
   </section>
 
@@ -74,8 +105,8 @@
     <ul>
       <li><b>Windows:</b> If the device doesn’t connect, install the <i>WinUSB</i> driver for “DFU in FS Mode” using Zadig. Choose the device in the dropdown, set driver to WinUSB, click <i>Install Driver</i>. Then try Connect again.</li>
       <li><b>Browser:</b> WebUSB works on Chrome/Edge over HTTPS. If you’re on Safari/Firefox, switch to Chrome or use the SD/USB update method (if applicable).</li>
-      <li><b>USB:</b> Use a direct USB port (no hubs), and a data‑capable cable.</li>
-      <li><b>Stuck in DFU:</b> Power‑cycle the module. If problems persist, re‑flash.</li>
+      <li><b>USB:</b> Use a direct USB port (no hubs), and a data-capable cable.</li>
+      <li><b>Stuck in DFU:</b> Power-cycle the module. If problems persist, re-flash.</li>
     </ul>
   </section>
 
@@ -89,8 +120,187 @@
   <p>© 2025 Ali Modular. Web flasher uses WebUSB DFU via <code>webdfu</code>. Your firmware files and checksums are never uploaded — flashing happens entirely in your browser.</p>
 </footer>
 
-<!-- WebDFU library (browser global "dfu") -->
-<script src="https://unpkg.com/webdfu@0.1.7/dist/webdfu.min.js"></script>
-<script src="./app.js"></script>
+<!-- WebDFU library (browser global "dfu"). Must be loaded over HTTPS. -->
+<script src="https://unpkg.com/webdfu@0.1.7/dist/webdfu.min.js" defer></script>
+
+<script>
+(function () {
+  const $ = (sel) => document.querySelector(sel);
+  const logEl = $("#log");
+  function log(msg){ const ts=new Date().toLocaleTimeString(); logEl.textContent += "["+ts+"] "+msg+"\\n"; logEl.scrollTop = logEl.scrollHeight; }
+
+  const envEl=$("#env"), connectBtn=$("#connectBtn"), deviceInfo=$("#deviceInfo");
+  const channelSel=$("#channel"), versionSel=$("#version"), refreshBtn=$("#refreshBtn");
+  const notesUl=$("#notes"), flashBtn=$("#flashBtn");
+  const fileInput=$("#fileInput"), flashFileBtn=$("#flashFileBtn");
+  const progressText=$("#progressText");
+
+  // Basic environment check as soon as DOM is ready
+  const supportsWebUSB = !!navigator.usb;
+  envEl.textContent = supportsWebUSB
+    ? "✅ WebUSB available (Chrome or Edge over HTTPS)."
+    : "⚠️ WebUSB not available. Use Chrome/Edge on desktop over HTTPS.";
+
+  // Ensure webdfu is actually present
+  window.addEventListener("load", () => {
+    if (!window.dfu) {
+      const m = "webdfu library failed to load. Check network/HTTPS.";
+      envEl.innerHTML = "❌ <span class='err'>" + m + "</span>";
+      log(m);
+    }
+  });
+
+  // Manifest loading
+  let manifest = null;
+  async function loadManifest() {
+    try {
+      const res = await fetch("./manifest.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("manifest.json not found ("+res.status+")");
+      manifest = await res.json();
+
+      // Channels
+      channelSel.innerHTML = "";
+      const chDefault = manifest.default_channel || "stable";
+      Object.keys(manifest.channels || {}).forEach(ch => {
+        const opt = document.createElement("option");
+        opt.value = ch; opt.textContent = ch;
+        if (ch === chDefault) opt.selected = true;
+        channelSel.appendChild(opt);
+      });
+      populateVersions();
+      log("Manifest loaded.");
+    } catch (e) {
+      log("ERROR: "+e.message);
+      const hint = "Make sure manifest.json is in the same folder as index.html.";
+      log(hint);
+    }
+  }
+
+  function populateVersions() {
+    versionSel.innerHTML = "";
+    const ch = channelSel.value;
+    const list = (manifest.channels && manifest.channels[ch]) || [];
+    list.forEach((fw, idx) => {
+      const opt = document.createElement("option");
+      opt.value = idx;
+      opt.textContent = fw.version + (fw.notes && fw.notes[0] ? " — "+fw.notes[0] : "");
+      versionSel.appendChild(opt);
+    });
+    updateNotes();
+  }
+
+  function updateNotes() {
+    notesUl.innerHTML = "";
+    const ch = channelSel.value;
+    const idx = parseInt(versionSel.value || "0", 10);
+    const fw = ((manifest.channels||{})[ch]||[])[idx];
+    if (!fw) return;
+    (fw.notes||[]).forEach(n => {
+      const li = document.createElement("li");
+      li.textContent = n;
+      notesUl.appendChild(li);
+    });
+  }
+
+  channelSel.addEventListener("change", populateVersions);
+  versionSel.addEventListener("change", updateNotes);
+  refreshBtn.addEventListener("click", () => loadManifest());
+
+  // DFU handles
+  let usbDevice = null;
+  let dfuDevice = null;
+
+  connectBtn.addEventListener("click", async () => {
+    try {
+      if (!window.dfu) throw new Error("webdfu not loaded");
+      const filters = [{ vendorId: 0x0483 }]; // STMicro (0483:DF11 common for Daisy DFU)
+      usbDevice = await navigator.usb.requestDevice({ filters });
+      await usbDevice.open();
+
+      dfuDevice = await dfu.findDevice(usbDevice);
+      if (!dfuDevice) throw new Error("DFU interface not found. Is the device in DFU mode?");
+      await dfuDevice.open();
+
+      const info = await dfuDevice.getInfo();
+      deviceInfo.textContent = "Connected: " + (usbDevice.productName || "USB Device") +
+        " (Transfer Size " + info.transferSize + " bytes)";
+      log("Connected " + (usbDevice.productName||"") + " — DFU alt(s): " + dfuDevice.interfaces.map(i => i.name).join(", "));
+      flashBtn.disabled = false;
+      flashFileBtn.disabled = !fileInput.files?.length ? true : false;
+    } catch (e) {
+      log("ERROR connecting: " + e.message);
+    }
+  });
+
+  async function flashArrayBuffer(buf) {
+    if (!dfuDevice) throw new Error("No DFU device");
+    progressText.textContent = "Preparing...";
+    const data = new Uint8Array(buf);
+    const intf = dfuDevice.interfaces[0];
+    await dfuDevice.claimInterface(intf.interfaceNumber);
+    await dfuDevice.selectAlternate(intf.interfaceNumber, 0);
+
+    const xfer = (written, total) => {
+      const pct = Math.floor((written/total)*100);
+      progressText.textContent = "Writing " + pct + "% ("+written+"/"+total+")";
+    };
+
+    await dfuDevice.download(0, data, xfer);
+    progressText.textContent = "Finalizing...";
+    await dfuDevice.manifest();
+    progressText.textContent = "Done. If the device doesn't reboot, power-cycle it.";
+    log("Flash complete.");
+  }
+
+  flashBtn.addEventListener("click", async () => {
+    try {
+      if (!manifest) throw new Error("Manifest not loaded");
+      const ch = channelSel.value;
+      const idx = parseInt(versionSel.value||"0",10);
+      const fw = ((manifest.channels||{})[ch]||[])[idx];
+      if (!fw) throw new Error("No firmware selected");
+
+      log("Downloading " + fw.file + " ...");
+      const res = await fetch("./" + fw.file, { cache: "no-store" });
+      if (!res.ok) throw new Error("Firmware file not found ("+res.status+")");
+      const buf = await res.arrayBuffer();
+
+      if (fw.sha256) {
+        const hash = await crypto.subtle.digest("SHA-256", buf);
+        const hex = Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,"0")).join("");
+        if (hex.toLowerCase() !== fw.sha256.toLowerCase()) {
+          throw new Error("Checksum mismatch. Download may be corrupted.");
+        }
+        log("Checksum OK.");
+      }
+
+      await flashArrayBuffer(buf);
+    } catch (e) {
+      progressText.textContent = "";
+      log("ERROR flashing: " + e.message);
+    }
+  });
+
+  fileInput.addEventListener("change", () => {
+    flashFileBtn.disabled = !fileInput.files?.length || !dfuDevice;
+  });
+
+  flashFileBtn.addEventListener("click", async () => {
+    try {
+      const f = fileInput.files?.[0];
+      if (!f) return;
+      log("Reading " + f.name + " ...");
+      const buf = await f.arrayBuffer();
+      await flashArrayBuffer(buf);
+    } catch (e) {
+      progressText.textContent = "";
+      log("ERROR flashing file: " + e.message);
+    }
+  });
+
+  // Kick off
+  loadManifest();
+})();
+</script>
 </body>
 </html>
