@@ -246,7 +246,7 @@
       list.forEach((fw, idx)=>{
         const opt = document.createElement("option");
         opt.value = idx;
-        opt.textContent = fw.version + (fw.notes && fw.notes[0] ? " — "+fw.notes[0] : "");
+        opt.textContent = fw.version;
         versionSel.appendChild(opt);
       });
       updateNotes();
