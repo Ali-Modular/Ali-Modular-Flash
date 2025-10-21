@@ -5,26 +5,26 @@
     "stable": [
       {
         "version": "1.14.0",
-        "date": "2025-10-21",
+        "date": "2025-10-20",
         "file": "EsusTrifecta_1.14.bin",
-        "size_bytes": 234020,
-        "sha256": "45acec010efe85418671c728e6210a06e7894d3b80d86ad2234b954efb17e74a",
+        "size_bytes": 524288,
+        "sha256": "",
         "notes": [
-          "Previous stable release"
+          "Added CERN granular processor",
+          "Added Limiter",
+          "Reverse Delay now clock\u2011syncable"
         ]
       }
     ],
     "beta": [
       {
-        "version": "1.15.0-beta1",
-        "date": "2025-10-21",
-        "file": "EsusTrifecta_1.15_Beta.bin",
-        "size_bytes": 253724,
-        "sha256": "2f6c53e5499e1f44cd4125cd8afad828dc4cfddd72ae32a3d8c2e73fe7ec82df",
+        "version": "1.15-beta",
+        "date": "2025-10-28",
+        "file": "EsusTrifecta_1.15_beta.bin",
+        "size_bytes": 540672,
+        "sha256": "",
         "notes": [
-          "Added CERN granular processor",
-          "Added Limiter",
-          "Reverse Delay now clock-syncable"
+          "Bugfixes and performance improvements"
         ]
       }
     ]
