@@ -833,24 +833,86 @@
     refreshBtn.addEventListener("click", loadManifest);
 
     // ── CONNECT ──
-    let usbDevice = null, dfuDevice = null;
+    let dfuDevice = null;
+    let transferSize = 1024;
+    let manifestationTolerant = true;
+
+    async function connectToDevice(selectedDevice) {
+      const interfaces = dfu.findDeviceDfuInterfaces(selectedDevice);
+      if (interfaces.length === 0) throw new Error("No DFU interface found — is the device in DFU mode?");
+
+      // Pick the right interface: prefer one containing flash address, else use first
+      const settings = interfaces.find(i => i.name && i.name.includes("0x08000000")) || interfaces[0];
+
+      dfuDevice = new dfu.Device(selectedDevice, settings);
+      await dfuDevice.open();
+
+      // Read DFU functional descriptor for transfer size + manifestation flag
+      try {
+        const desc = await getDFUDescriptorProperties(dfuDevice);
+        if (desc && desc.TransferSize) {
+          transferSize = desc.TransferSize;
+          manifestationTolerant = desc.ManifestationTolerant;
+        }
+        // Upgrade to dfuse.Device if STM32 DFUSe protocol
+        if (desc && desc.DFUVersion === 0x011a && settings.alternate.interfaceProtocol === 0x02) {
+          dfuDevice = new dfuse.Device(selectedDevice, settings);
+          await dfuDevice.open();
+        }
+      } catch (e) {
+        log("Warning: could not read DFU descriptor — using defaults.");
+      }
+
+      // Set correct start address for Daisy bootloader (skip first 256KB reserved for bootloader)
+      if (dfuDevice.memoryInfo) {
+        const seg = dfuDevice.getFirstWritableSegment();
+        if (seg) {
+          dfuDevice.startAddress = seg.start === 0x90000000 ? seg.start + 0x40000 : seg.start;
+        }
+      }
+
+      // Wire up logging to our console
+      dfuDevice.logInfo    = msg => log("INFO: " + msg);
+      dfuDevice.logWarning = msg => log("WARN: " + msg);
+      dfuDevice.logError   = msg => log("ERR:  " + msg);
+      dfuDevice.logDebug   = msg => {};
+      dfuDevice.logProgress = (done, total) => {
+        if (total) {
+          const pct = Math.floor((done / total) * 100);
+          progressText.textContent = "Writing " + pct + "% (" + done + " / " + total + " bytes)";
+        }
+      };
+
+      deviceInfo.textContent = "Connected: " + (selectedDevice.productName || "USB Device") +
+        " — transfer size: " + transferSize + "B";
+      log("Connected: " + (selectedDevice.productName || "USB Device"));
+      flashBtn.disabled = false;
+      flashFileBtn.disabled = !fileInput.files?.length;
+    }
+
+    function getDFUDescriptorProperties(device) {
+      return device.readConfigurationDescriptor(0).then(data => {
+        const configDesc = dfu.parseConfigurationDescriptor(data);
+        let funcDesc = null;
+        for (let desc of configDesc.descriptors) {
+          if (desc.bDescriptorType === 0x21 && desc.hasOwnProperty("bcdDFUVersion")) {
+            funcDesc = desc; break;
+          }
+        }
+        if (!funcDesc) return {};
+        return {
+          ManifestationTolerant: ((funcDesc.bmAttributes & 0x04) !== 0),
+          TransferSize:          funcDesc.wTransferSize,
+          DFUVersion:            funcDesc.bcdDFUVersion
+        };
+      }, () => ({}));
+    }
 
     connectBtn.addEventListener("click", async () => {
       try {
         if (!window.dfu) throw new Error("DFU library not loaded");
-        const filters = [{ vendorId: 0x0483 }];
-        usbDevice = await navigator.usb.requestDevice({ filters });
-        await usbDevice.open();
-        dfuDevice = await dfu.findDevice(usbDevice);
-        if (!dfuDevice) throw new Error("DFU interface not found — is the device in DFU mode?");
-        await dfuDevice.open();
-        const info = await dfuDevice.getInfo();
-        deviceInfo.textContent = "Connected: " + (usbDevice.productName || "USB Device") +
-          " — Transfer size: " + info.transferSize + "B";
-        log("Connected " + (usbDevice.productName || "USB Device") +
-          " — alts: " + dfuDevice.interfaces.map(i => i.name).join(", "));
-        flashBtn.disabled = false;
-        flashFileBtn.disabled = !fileInput.files?.length;
+        const selected = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x0483 }] });
+        await connectToDevice(selected);
       } catch (e) {
         log("ERROR connecting: " + e.message);
       }
@@ -859,18 +921,12 @@
     // ── FLASH ──
     async function flashArrayBuffer(buf) {
       if (!dfuDevice) throw new Error("No DFU device connected");
-      progressText.textContent = "Preparing...";
-      const data = new Uint8Array(buf);
-      const intf = dfuDevice.interfaces[0];
-      await dfuDevice.claimInterface(intf.interfaceNumber);
-      await dfuDevice.selectAlternate(intf.interfaceNumber, 0);
-      const onProgress = (written, total) => {
-        const pct = Math.floor((written / total) * 100);
-        progressText.textContent = "Writing " + pct + "% (" + written + " / " + total + ")";
-      };
-      await dfuDevice.download(0, data, onProgress);
-      progressText.textContent = "Finalizing...";
-      await dfuDevice.manifest();
+      progressText.textContent = "Erasing...";
+      try {
+        let status = await dfuDevice.getStatus();
+        if (status.state === dfu.dfuERROR) await dfuDevice.clearStatus();
+      } catch (e) {}
+      await dfuDevice.do_download(transferSize, buf, manifestationTolerant);
       progressText.textContent = "Done — power-cycle the module if it doesn't reboot automatically.";
       log("Flash complete.");
     }
