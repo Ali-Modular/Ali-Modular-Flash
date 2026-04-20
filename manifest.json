@@ -4,14 +4,34 @@
   "channels": {
     "stable": [
       {
+        "version": "1.18.0",
+        "date": "2026-04-20",
+        "file": "EsusTrifecta_1.18.bin",
+        "size_bytes": 314880,
+        "sha256": "8ccff3b9c95fba11e363ae97aa930061a15fbeb6f4d12681486af220a7b5cdff",
+        "notes": [
+          "NEW: Macro Knobs — assign knobs as modulation sources controlling multiple parameters",
+          "NEW: uLoop — microlooper effect",
+          "NEW: Studder — stutter / glitch / beat-repeat effect",
+          "Clock: PPQN now selectable (1, 4, 8, 12, 24, 48) on global settings screen",
+          "Modulation: added Offset and Scaling to all modulation destinations",
+          "Modulation: new destination modulation meter on Quick Mod Config screen",
+          "Modulation: 'Clear Mod Routings' added to Quick Settings screen",
+          "UI: 'Saving' indicator added to all screens where Quick Save is available",
+          "UI: new Sticky Knobs feature — tap Shift to disable single-knob view timeout",
+          "Sweeper: clock division markers added",
+          "Compressor: ratio control markers added"
+        ]
+      },
+      {
         "version": "1.14.0",
         "date": "2025-10-20",
         "file": "EsusTrifecta_1.14.bin",
-        "size_bytes": 524288,
-        "sha256": "",
+        "size_bytes": 234020,
+        "sha256": "45acec010efe85418671c728e6210a06e7894d3b80d86ad2234b954efb17e74a",
         "notes": [
-          "Bugfixes and performance improvements"
-  
+          "Fix: Master Gain default corrected to unity (was set to max gain)",
+          "Fix: Esu's Shimmer damping display corrected (now shows 200-18000 Hz)"
         ]
       }
     ],
@@ -19,13 +39,13 @@
       {
         "version": "1.15-beta",
         "date": "2025-10-28",
-        "file": "EsusTrifecta_1.15_beta.bin",
-        "size_bytes": 540672,
-        "sha256": "",
+        "file": "EsusTrifecta_1.15_Beta.bin",
+        "size_bytes": 253724,
+        "sha256": "2f6c53e5499e1f44cd4125cd8afad828dc4cfddd72ae32a3d8c2e73fe7ec82df",
         "notes": [
-          "Added CERN granular processor",
-          "Added Limiter",
-          "Reverse Delay now clock\u2011syncable"
+          "NEW: CERN granular processor",
+          "NEW: Limiter",
+          "Reverse Delay: now clock-syncable, fixed scratchiness on time adjust, eliminated hard clicks"
         ]
       }
     ]

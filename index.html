@@ -3,244 +3,811 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ali Modular — Firmware Updater</title>
-  <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#ea4a34">
+  <title>ALI Modular — Firmware Updater</title>
+  <meta name="description" content="Update the firmware on your Esu's Trifecta module via WebUSB DFU." />
+  <meta name="theme-color" content="#E8281A" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root{
-      --brand:#ea4a34; --brand-ink:#fff;
-      --bg:#0a0b0d; --bg-soft:#0e1117;
-      --fg:#e7edf3; --muted:#aab6c3;
-      --line:#1b2330; --card:#11161f;
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-      --radius:16px;
+    /* ── TOKENS ── */
+    :root {
+      --red:        #E8281A;
+      --red-dim:    #9B1A10;
+      --red-glow:   rgba(232, 40, 26, 0.15);
+      --red-border: rgba(232, 40, 26, 0.2);
+      --red-border-strong: rgba(232, 40, 26, 0.4);
+      --darker:  #060606;
+      --dark:    #0A0A0A;
+      --charcoal:#1A1A1A;
+      --card:    #111111;
+      --card2:   #0E0E0E;
+      --off-white: #E8E4DC;
+      --muted:   rgba(232, 228, 220, 0.45);
+      --futura: 'Rajdhani', 'Futura', 'Century Gothic', sans-serif;
     }
-    *{box-sizing:border-box}
-    html,body{
-      margin:0;padding:0;
-      background:linear-gradient(180deg,#0a0b0d 0%, #0b0e13 60%, #0d1016 100%);
-      color:var(--fg);
-      font:16px/1.45 "Futura","Futura PT","Avenir Next","Avenir",system-ui,-apple-system,"Segoe UI",Inter,Roboto,Arial,sans-serif;
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--darker);
+      color: var(--off-white);
+      font-family: var(--futura);
+      font-weight: 400;
+      overflow-x: hidden;
+      cursor: crosshair;
+      min-height: 100vh;
     }
-    a{color:var(--brand);text-decoration:none}
-    .wrap{max-width:1200px;margin:0 auto;padding:20px}
 
-    header{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
-    .logo{display:flex;align-items:center;gap:14px}
-    .logo img{height:42px;width:auto;display:block}
-    .logo h1{font-size:1.35rem;margin:0;letter-spacing:.2px}
-
-    .panel,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .card{padding:18px}
-
-    .columns{
-      display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start;
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
     }
-    .col-left, .col-right{
-      display:grid; gap:22px; align-content:start; min-height:0;
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(6, 6, 6, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--red-border);
     }
-    .col-left{ grid-template-rows: auto 1fr; min-height:0; }
 
-    .connect{padding:28px}
-    .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(234,74,52,.12);
-      border:1px solid rgba(234,74,52,.4); color:var(--brand); padding:6px 10px; border-radius:999px;
-      font-size:.85rem; margin-bottom:12px}
-    h2{font-size:1.8rem;margin:.2rem 0 .6rem 0}
-    p.lead{margin:.3rem 0 1rem 0;color:var(--muted)}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .btn{appearance:none;border:1px solid var(--line);background:var(--brand);color:var(--brand-ink);
-      padding:.8rem 1.1rem;border-radius:12px;font-weight:600;cursor:pointer;transition:.15s}
-    .btn:hover{transform:translateY(-1px);filter:saturate(1.05)}
-    .btn.ghost{background:transparent;color:var(--fg)}
-    .env{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);background:rgba(255,255,255,.02)}
-    .muted{color:var(--muted)}
-
-    label{font-size:.95rem;color:var(--muted)}
-    select,input[type="file"]{background:#0f141c;border:1px solid var(--line);color:var(--fg);
-      padding:.55rem .7rem;border-radius:10px}
-    details{background:#0f141c;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}
-    details summary{cursor:pointer;font-weight:600}
-    ul.notes{margin:.5rem 0 0 0;padding-left:18px}
-
-    .console{display:flex;flex-direction:column;min-height:0}
-    .console-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 0 18px}
-    .console-title{margin:0;font-size:1.05rem}
-    pre#log{
-      margin:12px; border-top:1px solid var(--line); padding:14px 18px;
-      background:var(--bg-soft);
-      border-bottom-left-radius:var(--radius); border-bottom-right-radius:var(--radius);
-      white-space:pre-wrap; word-break:break-word;
-      flex:1; min-height:220px; max-height:100%; overflow:auto;
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
     }
-    .btn.tiny{padding:.45rem .7rem;border-radius:10px}
-    footer{margin:26px 0;color:var(--muted);font-size:.9rem;text-align:center}
-    @media (max-width: 980px){
-      .columns{grid-template-columns:1fr}
-      .col-left{grid-template-rows:auto auto}
+
+    .nav-logo img {
+      height: 38px;
+      width: auto;
+      display: block;
+    }
+
+    .nav-logo-text {
+      font-family: var(--futura);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.35em;
+      color: var(--off-white);
+      text-transform: uppercase;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-link {
+      font-family: var(--futura);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--off-white); }
+
+    .nav-badge {
+      font-family: var(--futura);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--red);
+      border: 1px solid var(--red-border-strong);
+      padding: 6px 16px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .nav-badge:hover {
+      background: var(--red);
+      color: #fff;
+    }
+
+    /* ── PAGE WRAP ── */
+    .wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 112px 40px 60px;
+    }
+
+    /* ── HERO HEADER ── */
+    .page-header {
+      margin-bottom: 48px;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .eyebrow-line {
+      width: 32px;
+      height: 1px;
+      background: var(--red);
+    }
+
+    .eyebrow-text {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+
+    .page-title {
+      font-family: var(--futura);
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .page-title span { color: var(--red); }
+
+    .page-subtitle {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── GRID ── */
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .col {
+      display: grid;
+      gap: 20px;
+      align-content: start;
+    }
+
+    /* ── PANELS / CARDS ── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--red-border);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--red) 0%, transparent 60%);
+    }
+
+    .card {
+      background: var(--card2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 24px;
+      position: relative;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--red-border-strong) 0%, transparent 50%);
+    }
+
+    /* ── BADGE ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--red-glow);
+      border: 1px solid var(--red-border-strong);
+      color: var(--red);
+      padding: 5px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .badge-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--red);
+      border-radius: 50%;
+    }
+
+    /* ── TYPOGRAPHY ── */
+    .panel-title {
+      font-family: var(--futura);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: var(--off-white);
+    }
+
+    .panel-lead {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.65;
+      color: var(--muted);
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    .panel-lead b {
+      color: var(--off-white);
+      font-weight: 600;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-family: var(--futura);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--off-white);
+      margin-bottom: 16px;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      appearance: none;
+      font-family: var(--futura);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      padding: 14px 28px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--red);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateX(-100%);
+      transition: transform 0.3s;
+    }
+    .btn-primary:hover::before { transform: translateX(0); }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-primary:disabled::before { display: none; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .btn-ghost:hover { color: var(--off-white); border-color: rgba(255, 255, 255, 0.2); }
+    .btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .btn-tiny {
+      padding: 7px 14px;
+      font-size: 10px;
+    }
+
+    /* ── ROW ── */
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ── ENV STATUS ── */
+    .env-status {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.02);
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+
+    #deviceInfo {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    /* ── SELECTS ── */
+    select {
+      background: var(--dark);
+      border: 1px solid var(--red-border);
+      color: var(--off-white);
+      font-family: var(--futura);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 9px 12px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23E8281A'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+
+    select:focus { outline: 1px solid var(--red); }
+
+    /* ── FILE INPUT ── */
+    input[type="file"] {
+      background: var(--dark);
+      border: 1px solid var(--red-border);
+      color: var(--off-white);
+      font-family: var(--futura);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    input[type="file"]::-webkit-file-upload-button {
+      background: var(--charcoal);
+      color: var(--off-white);
+      border: none;
+      font-family: var(--futura);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    /* ── RELEASE NOTES ── */
+    details {
+      background: rgba(232, 40, 26, 0.03);
+      border: 1px solid var(--red-border);
+      padding: 14px 16px;
+      margin-top: 14px;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--red);
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before {
+      content: '+ ';
+      color: var(--red);
+    }
+    details[open] summary::before { content: '− '; }
+
+    ul#notes {
+      margin: 12px 0 0 0;
+      padding-left: 16px;
+    }
+
+    ul#notes li {
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.7;
+      letter-spacing: 0.03em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    /* ── SEPARATOR ── */
+    .sep {
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      margin: 20px 0;
+    }
+
+    /* ── CONSOLE ── */
+    .console-wrap {
+      background: var(--card);
+      border: 1px solid var(--red-border);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .console-wrap::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--red) 0%, transparent 60%);
+    }
+
+    .console-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .console-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+
+    pre#log {
+      margin: 0;
+      padding: 16px 20px;
+      background: #030303;
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(232, 228, 220, 0.7);
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 200px;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+
+    pre#log::-webkit-scrollbar { width: 4px; }
+    pre#log::-webkit-scrollbar-track { background: transparent; }
+    pre#log::-webkit-scrollbar-thumb { background: var(--red-dim); }
+
+    /* ── PROGRESS ── */
+    #progressText {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+    }
+
+    /* ── HOW-TO & TROUBLESHOOT ── */
+    .card ol, .card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .card li {
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.7;
+      letter-spacing: 0.03em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .card li b {
+      color: var(--off-white);
+      font-weight: 600;
+    }
+
+    /* ── DIVIDER LINE ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .divider-text {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--red-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    footer p {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--red);
+      text-decoration: none;
+    }
+
+    footer a:hover { color: var(--off-white); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 16px 20px; }
+      .wrap { padding: 96px 20px 48px; }
+      .columns { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .nav-right .nav-link { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="logo">
-        <img src="./assets/Ali-Modular_Color-Alt-Transparent.png" alt="Ali Modular logo" />
-        <h1>Ali Modular — Firmware Updater</h1>
-      </div>
-      <nav>
-        <a href="https://alimodular.com" target="_blank" rel="noopener">alimodular.com</a>
-      </nav>
-    </header>
 
-    <section class="columns">
-      <div class="col-left">
-        <div class="panel connect">
-          <span class="badge">DFU (Daisy Seed) via WebUSB</span>
-          <h2>Update your Esu’s Trifecta firmware</h2>
-          <p class="lead">Use Chrome or Edge on desktop over HTTPS. Put the module in <b>DFU</b>: hold <b>BOOT</b>, press <b>RESET</b>, release RESET, then release BOOT.</p>
+  <!-- NAV -->
+  <nav>
+    <a href="https://alimodular.com" class="nav-logo" target="_blank" rel="noopener">
+      <img src="./assets/Ali-Modular_Color-Alt-Transparent.png" alt="ALI Modular" />
+      <span class="nav-logo-text">ALI Modular</span>
+    </a>
+    <div class="nav-right">
+      <a href="https://alimodular.com" class="nav-link" target="_blank" rel="noopener">alimodular.com</a>
+      <a href="https://alimodular.com/products" class="nav-badge" target="_blank" rel="noopener">Shop</a>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="wrap">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Firmware Updater</span>
+      </div>
+      <h1 class="page-title">
+        Esu's <span>Trifecta</span>
+      </h1>
+      <p class="page-subtitle">Daisy Seed &nbsp;·&nbsp; WebUSB DFU &nbsp;·&nbsp; Chrome / Edge</p>
+    </div>
+
+    <!-- TWO COLUMN GRID -->
+    <div class="columns">
+
+      <!-- LEFT COL -->
+      <div class="col">
+
+        <!-- CONNECT PANEL -->
+        <div class="panel">
+          <span class="badge"><span class="badge-dot"></span>DFU via WebUSB</span>
+          <h2 class="panel-title">Connect Your Module</h2>
+          <p class="panel-lead">
+            Put the module into DFU mode: hold <b>BOOT</b>, press <b>RESET</b>,
+            release RESET, then release BOOT. Use Chrome or Edge on desktop over HTTPS.
+          </p>
           <div class="row">
-            <button id="connectBtn" class="btn">Connect Device</button>
-            <button id="refreshBtn" class="btn ghost">Refresh Versions</button>
-            <span id="deviceInfo" class="muted"></span>
+            <button id="connectBtn" class="btn btn-primary">Connect Device</button>
+            <button id="refreshBtn" class="btn btn-ghost">Refresh Versions</button>
           </div>
-          <div id="env" class="env"></div>
+          <div class="env-status" id="env"></div>
+          <div style="margin-top:8px">
+            <span id="deviceInfo"></span>
+          </div>
         </div>
 
-        <div class="card console">
+        <!-- CONSOLE -->
+        <div class="console-wrap">
           <div class="console-head">
-            <h3 class="console-title">Console</h3>
-            <div class="row">
-              <button id="clearLogBtn" class="btn tiny ghost">Clear</button>
-            </div>
+            <span class="console-title">Console Output</span>
+            <button id="clearLogBtn" class="btn btn-ghost btn-tiny">Clear</button>
           </div>
           <pre id="log" aria-live="polite"></pre>
         </div>
+
       </div>
 
-      <div class="col-right">
-        <div class="card">
-          <h3>Firmware</h3>
-          <div class="row">
-            <label for="channel">Channel</label>
-            <select id="channel"></select>
-            <label for="version">Version</label>
-            <select id="version"></select>
+      <!-- RIGHT COL -->
+      <div class="col">
+
+        <!-- FIRMWARE CARD -->
+        <div class="panel">
+          <h2 class="panel-title">Firmware</h2>
+
+          <div class="row" style="margin-bottom:4px">
+            <div>
+              <p class="section-label">Channel</p>
+              <select id="channel"></select>
+            </div>
+            <div>
+              <p class="section-label">Version</p>
+              <select id="version"></select>
+            </div>
           </div>
+
           <details open>
-            <summary>Release notes</summary>
-            <ul id="notes" class="notes"></ul>
+            <summary>Release Notes</summary>
+            <ul id="notes"></ul>
           </details>
-          <div class="row" style="margin-top:12px">
-            <button id="flashBtn" class="btn" disabled>Flash Selected</button>
-            <span id="progressText" class="muted"></span>
+
+          <div class="row" style="margin-top:18px">
+            <button id="flashBtn" class="btn btn-primary" disabled>Flash Selected</button>
+            <span id="progressText"></span>
           </div>
-          <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-          <h3>Manual file</h3>
-          <p class="muted">Have a <code>.bin</code>? Flash it directly.</p>
+
+          <div class="divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">Or</span>
+            <div class="divider-line"></div>
+          </div>
+
+          <p class="section-label" style="margin-bottom:10px">Manual .bin file</p>
+          <p class="panel-lead" style="margin-bottom:12px;font-size:13px">Flash a local <code style="background:rgba(232,40,26,0.08);border:1px solid var(--red-border);padding:1px 6px;font-family:monospace;">.bin</code> file directly.</p>
           <div class="row">
             <input id="fileInput" type="file" accept=".bin,application/octet-stream" />
-            <button id="flashFileBtn" class="btn" disabled>Flash File</button>
+            <button id="flashFileBtn" class="btn btn-ghost" disabled>Flash File</button>
           </div>
         </div>
 
-        <div id="howto" class="card">
-          <h3>How-To</h3>
+        <!-- HOW-TO CARD -->
+        <div class="card">
+          <p class="card-title">How To Update</p>
           <ol>
-            <li>Enter DFU: hold <b>BOOT</b>, tap <b>RESET</b>, release RESET, then BOOT.</li>
-            <li>Click <b>Connect Device</b> → select <b>DFU in FS Mode</b>.</li>
-            <li>Pick a version → <b>Flash Selected</b>. Keep USB connected.</li>
-            <li>When finished, power-cycle the module.</li>
+            <li>Hold <b>BOOT</b>, tap <b>RESET</b>, release RESET, then BOOT — module enters DFU mode.</li>
+            <li>Click <b>Connect Device</b> → select <b>DFU in FS Mode</b> from the browser dialog.</li>
+            <li>Choose your channel and version, then click <b>Flash Selected</b>. Keep USB connected.</li>
+            <li>Wait for the console to confirm completion, then power-cycle the module.</li>
           </ol>
         </div>
 
-        <div id="troubleshoot" class="card">
-          <h3>Troubleshoot</h3>
+        <!-- TROUBLESHOOT CARD -->
+        <div class="card">
+          <p class="card-title">Troubleshooting</p>
           <ul>
-            <li><b>Windows:</b> Install <i>WinUSB</i> using Zadig if device doesn’t connect.</li>
-            <li><b>Browser:</b> Use Chrome or Edge over HTTPS. Safari/Firefox not supported.</li>
-            <li><b>USB:</b> Use a direct port and a data-capable cable.</li>
-            <li><b>Stuck in DFU?</b> Power-cycle and retry.</li>
+            <li><b>Windows:</b> Install <i>WinUSB</i> driver via Zadig if the device doesn't appear.</li>
+            <li><b>Browser:</b> Must use Chrome or Edge on desktop over HTTPS. Safari &amp; Firefox are not supported.</li>
+            <li><b>Cable:</b> Use a direct USB port and a data-capable (not charge-only) cable.</li>
+            <li><b>Stuck in DFU?</b> Power-cycle the module and retry from step one.</li>
           </ul>
         </div>
-      </div>
-    </section>
 
-    <footer>© 2025 Ali Modular · Flashing happens locally in your browser with WebUSB DFU.</footer>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>© 2025 <a href="https://alimodular.com" target="_blank" rel="noopener">ALI Modular</a> — All flashing happens locally in your browser via WebUSB.</p>
+      <p>Made for <a href="https://alimodular.com" target="_blank" rel="noopener">Esu's Trifecta</a></p>
+    </footer>
+
   </div>
 
-  <!-- Local DFU libraries (no CDN needed) -->
+  <!-- DFU LIBRARIES -->
   <script src="./dfu/dfu.js"></script>
   <script src="./dfu/dfuse.js"></script>
-  <!-- Optional:
-  <script src="./dfu/FileSaver.js"></script>
-  -->
 
   <script>
   (function () {
     const $ = (sel) => document.querySelector(sel);
-    const logEl = $("#log");
-    const MAX_LOG_LINES = 250;
+    const logEl      = $("#log");
+    const MAX_LOG    = 250;
 
-    function clampLog() {
-      const lines = logEl.textContent.split("\\n");
-      if (lines.length > MAX_LOG_LINES) {
-        logEl.textContent = lines.slice(-MAX_LOG_LINES).join("\\n");
-      }
-    }
-    function log(msg){
-      const ts=new Date().toLocaleTimeString();
-      logEl.textContent += "["+ts+"] "+msg+"\\n";
-      clampLog();
+    function log(msg) {
+      const ts = new Date().toLocaleTimeString();
+      logEl.textContent += "[" + ts + "] " + msg + "\n";
+      const lines = logEl.textContent.split("\n");
+      if (lines.length > MAX_LOG) logEl.textContent = lines.slice(-MAX_LOG).join("\n");
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    const envEl=$("#env"), connectBtn=$("#connectBtn"), deviceInfo=$("#deviceInfo");
-    const channelSel=$("#channel"), versionSel=$("#version"), refreshBtn=$("#refreshBtn");
-    const notesUl=$("#notes"), flashBtn=$("#flashBtn");
-    const fileInput=$("#fileInput"), flashFileBtn=$("#flashFileBtn");
-    const progressText=$("#progressText");
-    const clearLogBtn=$("#clearLogBtn");
+    const envEl       = $("#env");
+    const connectBtn  = $("#connectBtn");
+    const deviceInfo  = $("#deviceInfo");
+    const channelSel  = $("#channel");
+    const versionSel  = $("#version");
+    const refreshBtn  = $("#refreshBtn");
+    const notesUl     = $("#notes");
+    const flashBtn    = $("#flashBtn");
+    const fileInput   = $("#fileInput");
+    const flashFileBtn= $("#flashFileBtn");
+    const progressText= $("#progressText");
+    const clearLogBtn = $("#clearLogBtn");
 
-    clearLogBtn.addEventListener("click", ()=>{ logEl.textContent=""; });
+    clearLogBtn.addEventListener("click", () => { logEl.textContent = ""; });
 
     const supportsWebUSB = !!navigator.usb;
     envEl.textContent = supportsWebUSB
-      ? "✅ WebUSB available (Chrome or Edge over HTTPS)."
-      : "⚠️ WebUSB not available. Use Chrome/Edge on desktop over HTTPS.";
+      ? "✓ WebUSB available — ready to connect."
+      : "✗ WebUSB not available. Open this page in Chrome or Edge on desktop over HTTPS.";
 
     window.addEventListener("load", () => {
       if (!window.dfu) {
-        envEl.innerHTML = "❌ <b>DFU libraries</b> failed to load. Make sure <code>dfu/dfu.js</code> and <code>dfu/dfuse.js</code> are present.";
+        envEl.textContent = "✗ DFU libraries failed to load. Check that dfu/dfu.js and dfu/dfuse.js are present.";
         log("DFU libraries not loaded.");
       }
     });
 
-    // Manifest loading etc. (unchanged)
+    // ── MANIFEST ──
     let manifest = null;
+
     async function loadManifest() {
       try {
         const res = await fetch("./manifest.json", { cache: "no-store" });
-        if (!res.ok) throw new Error("manifest.json not found ("+res.status+")");
+        if (!res.ok) throw new Error("manifest.json not found (" + res.status + ")");
         manifest = await res.json();
         channelSel.innerHTML = "";
         const chDefault = manifest.default_channel || "stable";
-        Object.keys(manifest.channels||{}).forEach(ch=>{
-          const opt=document.createElement("option");
-          opt.value=ch; opt.textContent=ch;
-          if (ch===chDefault) opt.selected=true;
+        Object.keys(manifest.channels || {}).forEach(ch => {
+          const opt = document.createElement("option");
+          opt.value = ch;
+          opt.textContent = ch.charAt(0).toUpperCase() + ch.slice(1);
+          if (ch === chDefault) opt.selected = true;
           channelSel.appendChild(opt);
         });
         populateVersions();
-        log("Manifest loaded.");
+        log("Manifest loaded — " + manifest.product);
       } catch (e) {
-        log("ERROR: "+e.message+" — Ensure manifest.json is beside index.html.");
+        log("ERROR: " + e.message);
       }
     }
+
     function populateVersions() {
       versionSel.innerHTML = "";
-      const ch = channelSel.value;
+      const ch   = channelSel.value;
       const list = (manifest.channels && manifest.channels[ch]) || [];
-      list.forEach((fw, idx)=>{
+      list.forEach((fw, idx) => {
         const opt = document.createElement("option");
         opt.value = idx;
         opt.textContent = fw.version;
@@ -248,89 +815,111 @@
       });
       updateNotes();
     }
+
     function updateNotes() {
       notesUl.innerHTML = "";
-      const ch = channelSel.value;
+      const ch  = channelSel.value;
       const idx = parseInt(versionSel.value || "0", 10);
-      const fw = ((manifest.channels||{})[ch]||[])[idx];
+      const fw  = ((manifest.channels || {})[ch] || [])[idx];
       if (!fw) return;
-      (fw.notes||[]).forEach(n=>{
-        const li=document.createElement("li"); li.textContent=n; notesUl.appendChild(li);
+      (fw.notes || []).forEach(n => {
+        const li = document.createElement("li");
+        li.textContent = n;
+        notesUl.appendChild(li);
       });
     }
+
     channelSel.addEventListener("change", populateVersions);
     versionSel.addEventListener("change", updateNotes);
     refreshBtn.addEventListener("click", loadManifest);
 
-    let usbDevice=null, dfuDevice=null;
+    // ── CONNECT ──
+    let usbDevice = null, dfuDevice = null;
 
-    connectBtn.addEventListener("click", async ()=>{
-      try{
+    connectBtn.addEventListener("click", async () => {
+      try {
         if (!window.dfu) throw new Error("DFU library not loaded");
         const filters = [{ vendorId: 0x0483 }];
         usbDevice = await navigator.usb.requestDevice({ filters });
         await usbDevice.open();
         dfuDevice = await dfu.findDevice(usbDevice);
-        if (!dfuDevice) throw new Error("DFU interface not found. Is the device in DFU mode?");
+        if (!dfuDevice) throw new Error("DFU interface not found — is the device in DFU mode?");
         await dfuDevice.open();
         const info = await dfuDevice.getInfo();
         deviceInfo.textContent = "Connected: " + (usbDevice.productName || "USB Device") +
-          " (Transfer Size " + info.transferSize + " bytes)";
-        log("Connected " + (usbDevice.productName||"") + " — DFU alts: " + dfuDevice.interfaces.map(i=>i.name).join(", "));
-        flashBtn.disabled=false;
-        flashFileBtn.disabled = !fileInput.files?.length ? true : false;
-      }catch(e){ log("ERROR connecting: "+e.message); }
+          " — Transfer size: " + info.transferSize + "B";
+        log("Connected " + (usbDevice.productName || "USB Device") +
+          " — alts: " + dfuDevice.interfaces.map(i => i.name).join(", "));
+        flashBtn.disabled = false;
+        flashFileBtn.disabled = !fileInput.files?.length;
+      } catch (e) {
+        log("ERROR connecting: " + e.message);
+      }
     });
 
-    async function flashArrayBuffer(buf){
-      if (!dfuDevice) throw new Error("No DFU device");
-      progressText.textContent="Preparing...";
-      const data=new Uint8Array(buf);
+    // ── FLASH ──
+    async function flashArrayBuffer(buf) {
+      if (!dfuDevice) throw new Error("No DFU device connected");
+      progressText.textContent = "Preparing...";
+      const data = new Uint8Array(buf);
       const intf = dfuDevice.interfaces[0];
       await dfuDevice.claimInterface(intf.interfaceNumber);
       await dfuDevice.selectAlternate(intf.interfaceNumber, 0);
-      const xfer=(written,total)=>{ const pct=Math.floor((written/total)*100);
-        progressText.textContent="Writing "+pct+"% ("+written+"/"+total+")"; };
-      await dfuDevice.download(0, data, xfer);
-      progressText.textContent="Finalizing...";
+      const onProgress = (written, total) => {
+        const pct = Math.floor((written / total) * 100);
+        progressText.textContent = "Writing " + pct + "% (" + written + " / " + total + ")";
+      };
+      await dfuDevice.download(0, data, onProgress);
+      progressText.textContent = "Finalizing...";
       await dfuDevice.manifest();
-      progressText.textContent="Done. If the device doesn't reboot, power-cycle it.";
+      progressText.textContent = "Done — power-cycle the module if it doesn't reboot automatically.";
       log("Flash complete.");
     }
 
-    flashBtn.addEventListener("click", async ()=>{
-      try{
+    flashBtn.addEventListener("click", async () => {
+      try {
         if (!manifest) throw new Error("Manifest not loaded");
-        const ch = channelSel.value;
-        const idx = parseInt(versionSel.value||"0",10);
-        const fw = ((manifest.channels||{})[ch]||[])[idx];
+        const ch  = channelSel.value;
+        const idx = parseInt(versionSel.value || "0", 10);
+        const fw  = ((manifest.channels || {})[ch] || [])[idx];
         if (!fw) throw new Error("No firmware selected");
-        log("Downloading "+fw.file+" ...");
-        const res = await fetch("./"+fw.file, { cache: "no-store" });
-        if (!res.ok) throw new Error("Firmware file not found ("+res.status+")");
+        log("Downloading " + fw.file + " ...");
+        const res = await fetch("./" + fw.file, { cache: "no-store" });
+        if (!res.ok) throw new Error("Firmware file not found (" + res.status + ")");
         const buf = await res.arrayBuffer();
-        if (fw.sha256){
-          const hash=await crypto.subtle.digest("SHA-256", buf);
-          const hex=Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,"0")).join("");
-          if (hex.toLowerCase() !== fw.sha256.toLowerCase()) throw new Error("Checksum mismatch.");
-          log("Checksum OK.");
+        if (fw.sha256) {
+          const hash = await crypto.subtle.digest("SHA-256", buf);
+          const hex  = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
+          if (hex.toLowerCase() !== fw.sha256.toLowerCase()) throw new Error("Checksum mismatch — download may be corrupted.");
+          log("Checksum verified.");
         }
         await flashArrayBuffer(buf);
-      }catch(e){ progressText.textContent=""; log("ERROR flashing: "+e.message); }
+      } catch (e) {
+        progressText.textContent = "";
+        log("ERROR: " + e.message);
+      }
     });
 
-    fileInput.addEventListener("change",()=>{ flashFileBtn.disabled = !fileInput.files?.length || !dfuDevice; });
-    flashFileBtn.addEventListener("click", async ()=>{
-      try{
-        const f=fileInput.files?.[0]; if(!f) return;
-        log("Reading "+f.name+" ...");
-        const buf=await f.arrayBuffer();
+    fileInput.addEventListener("change", () => {
+      flashFileBtn.disabled = !fileInput.files?.length || !dfuDevice;
+    });
+
+    flashFileBtn.addEventListener("click", async () => {
+      try {
+        const f = fileInput.files?.[0];
+        if (!f) return;
+        log("Reading " + f.name + " ...");
+        const buf = await f.arrayBuffer();
         await flashArrayBuffer(buf);
-      }catch(e){ progressText.textContent=""; log("ERROR flashing file: "+e.message); }
+      } catch (e) {
+        progressText.textContent = "";
+        log("ERROR: " + e.message);
+      }
     });
 
     loadManifest();
   })();
   </script>
+
 </body>
 </html>
