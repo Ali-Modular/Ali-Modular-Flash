@@ -686,6 +686,16 @@
             <span id="progressText"></span>
           </div>
 
+          <div id="progressWrap" style="display:none;margin-top:16px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span id="progressLabel" style="font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--red);">Erasing</span>
+              <span id="progressPct" style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--muted);">0%</span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.06);overflow:hidden;">
+              <div id="progressBar" style="height:100%;width:0%;background:var(--red);transition:width 0.15s ease;"></div>
+            </div>
+          </div>
+
           <div class="divider">
             <div class="divider-line"></div>
             <span class="divider-text">Or</span>
@@ -762,7 +772,23 @@
     const fileInput   = $("#fileInput");
     const flashFileBtn= $("#flashFileBtn");
     const progressText= $("#progressText");
+    const progressWrap= $("#progressWrap");
+    const progressBar = $("#progressBar");
+    const progressLabel=$("#progressLabel");
+    const progressPct = $("#progressPct");
     const clearLogBtn = $("#clearLogBtn");
+
+    function setProgress(pct, label) {
+      progressWrap.style.display = "block";
+      progressBar.style.width = pct + "%";
+      progressPct.textContent = pct + "%";
+      if (label) progressLabel.textContent = label;
+    }
+
+    function hideProgress() {
+      progressWrap.style.display = "none";
+      progressBar.style.width = "0%";
+    }
 
     clearLogBtn.addEventListener("click", () => { logEl.textContent = ""; });
 
@@ -900,7 +926,8 @@
       device.logProgress = (done, total) => {
         if (total) {
           const pct = Math.floor((done / total) * 100);
-          progressText.textContent = "Writing " + pct + "% (" + done + " / " + total + " bytes)";
+          setProgress(pct, "Writing");
+          progressText.textContent = done + " / " + total + " bytes";
         }
       };
 
@@ -943,13 +970,18 @@
     // ── FLASH ──
     async function flashArrayBuffer(buf) {
       if (!dfuDevice) throw new Error("No DFU device connected");
-      progressText.textContent = "Erasing...";
+      flashBtn.disabled = true;
+      flashFileBtn.disabled = true;
+      setProgress(0, "Erasing");
+      progressText.textContent = "";
       try {
         let status = await dfuDevice.getStatus();
         if (status.state === dfu.dfuERROR) await dfuDevice.clearStatus();
       } catch (e) {}
       await dfuDevice.do_download(transferSize, buf, manifestationTolerant);
-      progressText.textContent = "Done — power-cycle the module if it doesn't reboot automatically.";
+      setProgress(100, "Done");
+      progressText.textContent = "Power-cycle the module if it doesn't reboot automatically.";
+      flashBtn.disabled = false;
       log("Flash complete.");
     }
 
@@ -972,7 +1004,9 @@
         }
         await flashArrayBuffer(buf);
       } catch (e) {
+        hideProgress();
         progressText.textContent = "";
+        flashBtn.disabled = false;
         log("ERROR: " + (e.message || e));
       }
     });
@@ -989,6 +1023,7 @@
         const buf = await f.arrayBuffer();
         await flashArrayBuffer(buf);
       } catch (e) {
+        hideProgress();
         progressText.textContent = "";
         log("ERROR: " + (e.message || e));
       }
