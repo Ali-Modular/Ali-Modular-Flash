@@ -32,7 +32,8 @@
         "size_bytes": 318664,
         "sha256": "a83148e45ab3ae1f825ae3d0fa475fae141d16993c9629e7cc9efbb5ece7fc2f",
         "notes": [
-          "Beta release — release notes coming soon"
+          "NEW: Spring Reverb effect",
+          "CERN: Major internal cleanup"
         ]
       }
     ]
