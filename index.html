@@ -634,9 +634,9 @@
           <span class="badge"><span class="badge-dot"></span>DFU via WebUSB</span>
           <h2 class="panel-title">Connect Your Module</h2>
           <p class="panel-lead">
-            Put the module into DFU mode: hold <b>BOOT</b>, press <b>RESET</b>,
-            release RESET, then release BOOT. Use Chrome or Edge on desktop over HTTPS.
+            To enter DFU mode: press and release <b>RESET</b>, then immediately press <b>BOOT</b> within the 3-second timeout. Use Chrome or Edge on desktop over HTTPS.
           </p>
+          <img src="./assets/daisy-dfu-buttons.png" alt="Daisy Seed RESET and BOOT button locations" style="display:block;max-width:100%;margin:16px 0;opacity:0.9;" />
           <div class="row">
             <button id="connectBtn" class="btn btn-primary">Connect Device</button>
             <button id="refreshBtn" class="btn btn-ghost">Refresh Versions</button>
@@ -714,7 +714,7 @@
         <div class="card">
           <p class="card-title">How To Update</p>
           <ol>
-            <li>Hold <b>BOOT</b>, tap <b>RESET</b>, release RESET, then BOOT — module enters DFU mode.</li>
+            <li>Press and release <b>RESET</b>, then immediately press <b>BOOT</b> within the 3-second timeout — module enters DFU mode.</li>
             <li>Click <b>Connect Device</b> → select <b>DFU in FS Mode</b> from the browser dialog.</li>
             <li>Choose your channel and version, then click <b>Flash Selected</b>. Keep USB connected.</li>
             <li>Wait for the console to confirm completion, then power-cycle the module.</li>
