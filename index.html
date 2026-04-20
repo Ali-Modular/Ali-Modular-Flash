@@ -798,7 +798,7 @@
         populateVersions();
         log("Manifest loaded — " + manifest.product);
       } catch (e) {
-        log("ERROR: " + e.message);
+        log("ERROR: " + (e.message || e));
       }
     }
 
@@ -837,52 +837,74 @@
     let transferSize = 1024;
     let manifestationTolerant = true;
 
+    async function fixInterfaceNames(usbDevice, interfaces) {
+      if (interfaces.some(i => i.name == null)) {
+        const temp = new dfu.Device(usbDevice, interfaces[0]);
+        await temp.device_.open();
+        await temp.device_.selectConfiguration(1);
+        const mapping = await temp.readInterfaceNames();
+        await temp.close();
+        for (let intf of interfaces) {
+          if (intf.name === null) {
+            const cfgIdx  = intf.configuration.configurationValue;
+            const intfNum = intf["interface"].interfaceNumber;
+            const alt     = intf.alternate.alternateSetting;
+            intf.name = mapping[cfgIdx][intfNum][alt];
+          }
+        }
+      }
+    }
+
     async function connectToDevice(selectedDevice) {
       const interfaces = dfu.findDeviceDfuInterfaces(selectedDevice);
       if (interfaces.length === 0) throw new Error("No DFU interface found — is the device in DFU mode?");
 
-      // Pick the right interface: prefer one containing flash address, else use first
-      const settings = interfaces.find(i => i.name && i.name.includes("0x08000000")) || interfaces[0];
+      // Read interface names from USB descriptors (needed so dfuse.Device can parse memory map)
+      await fixInterfaceNames(selectedDevice, interfaces);
 
-      dfuDevice = new dfu.Device(selectedDevice, settings);
-      await dfuDevice.open();
+      const settings = interfaces[0];
+      let device = new dfu.Device(selectedDevice, settings);
+      await device.open();
 
       // Read DFU functional descriptor for transfer size + manifestation flag
       try {
-        const desc = await getDFUDescriptorProperties(dfuDevice);
-        if (desc && desc.TransferSize) {
-          transferSize = desc.TransferSize;
-          manifestationTolerant = desc.ManifestationTolerant;
-        }
-        // Upgrade to dfuse.Device if STM32 DFUSe protocol
+        const desc = await getDFUDescriptorProperties(device);
+        if (desc && desc.TransferSize)          transferSize = desc.TransferSize;
+        if (desc && desc.ManifestationTolerant !== undefined) manifestationTolerant = desc.ManifestationTolerant;
+        // Upgrade to dfuse.Device for STM32 DFUSe (gives us memory map + sector erase)
         if (desc && desc.DFUVersion === 0x011a && settings.alternate.interfaceProtocol === 0x02) {
-          dfuDevice = new dfuse.Device(selectedDevice, settings);
-          await dfuDevice.open();
+          await device.close();
+          device = new dfuse.Device(selectedDevice, settings);
+          await device.open();
         }
       } catch (e) {
-        log("Warning: could not read DFU descriptor — using defaults.");
+        log("Warning: could not read DFU descriptor — " + (e.message || e));
       }
 
-      // Set correct start address for Daisy bootloader (skip first 256KB reserved for bootloader)
-      if (dfuDevice.memoryInfo) {
-        const seg = dfuDevice.getFirstWritableSegment();
+      // Set start address — Daisy bootloader QSPI starts at 0x90000000, skip first 256KB
+      if (device.memoryInfo) {
+        const seg = device.getFirstWritableSegment();
         if (seg) {
-          dfuDevice.startAddress = seg.start === 0x90000000 ? seg.start + 0x40000 : seg.start;
+          device.startAddress = seg.start === 0x90000000 ? seg.start + 0x40000 : seg.start;
+          log("Memory: " + device.memoryInfo.name + " — start 0x" + device.startAddress.toString(16));
         }
+      } else {
+        log("Warning: no memory map — flashing may fail.");
       }
 
       // Wire up logging to our console
-      dfuDevice.logInfo    = msg => log("INFO: " + msg);
-      dfuDevice.logWarning = msg => log("WARN: " + msg);
-      dfuDevice.logError   = msg => log("ERR:  " + msg);
-      dfuDevice.logDebug   = msg => {};
-      dfuDevice.logProgress = (done, total) => {
+      device.logInfo     = msg => log("INFO: " + msg);
+      device.logWarning  = msg => log("WARN: " + msg);
+      device.logError    = msg => log("ERR:  " + msg);
+      device.logDebug    = ()  => {};
+      device.logProgress = (done, total) => {
         if (total) {
           const pct = Math.floor((done / total) * 100);
           progressText.textContent = "Writing " + pct + "% (" + done + " / " + total + " bytes)";
         }
       };
 
+      dfuDevice = device;
       deviceInfo.textContent = "Connected: " + (selectedDevice.productName || "USB Device") +
         " — transfer size: " + transferSize + "B";
       log("Connected: " + (selectedDevice.productName || "USB Device"));
@@ -951,7 +973,7 @@
         await flashArrayBuffer(buf);
       } catch (e) {
         progressText.textContent = "";
-        log("ERROR: " + e.message);
+        log("ERROR: " + (e.message || e));
       }
     });
 
@@ -968,7 +990,7 @@
         await flashArrayBuffer(buf);
       } catch (e) {
         progressText.textContent = "";
-        log("ERROR: " + e.message);
+        log("ERROR: " + (e.message || e));
       }
     });
 
