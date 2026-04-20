@@ -22,30 +22,17 @@
           "Sweeper: clock division markers added",
           "Compressor: ratio control markers added"
         ]
-      },
-      {
-        "version": "1.14.0",
-        "date": "2025-10-20",
-        "file": "EsusTrifecta_1.14.bin",
-        "size_bytes": 234020,
-        "sha256": "45acec010efe85418671c728e6210a06e7894d3b80d86ad2234b954efb17e74a",
-        "notes": [
-          "Fix: Master Gain default corrected to unity (was set to max gain)",
-          "Fix: Esu's Shimmer damping display corrected (now shows 200-18000 Hz)"
-        ]
       }
     ],
     "beta": [
       {
-        "version": "1.15-beta",
-        "date": "2025-10-28",
-        "file": "EsusTrifecta_1.15_Beta.bin",
-        "size_bytes": 253724,
-        "sha256": "2f6c53e5499e1f44cd4125cd8afad828dc4cfddd72ae32a3d8c2e73fe7ec82df",
+        "version": "1.19-beta",
+        "date": "2026-04-20",
+        "file": "EsusTrifecta_1.19beta.bin",
+        "size_bytes": 318664,
+        "sha256": "a83148e45ab3ae1f825ae3d0fa475fae141d16993c9629e7cc9efbb5ece7fc2f",
         "notes": [
-          "NEW: CERN granular processor",
-          "NEW: Limiter",
-          "Reverse Delay: now clock-syncable, fixed scratchiness on time adjust, eliminated hard clicks"
+          "Beta release — release notes coming soon"
         ]
       }
     ]
