@@ -647,6 +647,7 @@
           <div style="margin-top:8px">
             <span id="deviceInfo"></span>
           </div>
+          <div id="modeAlert" style="display:none;margin-top:14px;padding:14px 16px;border:1px solid var(--red-border-strong);background:var(--red-glow);color:var(--off-white);font-size:13px;line-height:1.7"></div>
         </div>
 
         <!-- CONSOLE -->
@@ -886,6 +887,24 @@
       }
     }
 
+    function showModeAlert() {
+      const el = document.getElementById("modeAlert");
+      if (!el) return;
+      el.innerHTML =
+        "<b>⚠ Wrong mode — this is DFU mode, not Bootloader mode.</b><br>" +
+        "Flashing now can stop your module from booting. Let's start over in the correct mode:<br>" +
+        "1. Unplug the USB cable from the module.<br>" +
+        "2. Plug it back in and <b>immediately press BOOT</b> — the boot LED should flash steadily.<br>" +
+        "&nbsp;&nbsp;&nbsp;(Missed the window? Press <b>RESET</b>, then immediately press <b>BOOT</b> within 3 seconds.)<br>" +
+        "3. Click <b>Connect Device</b> again and select <b>Daisy Bootloader</b> from the browser list.";
+      el.style.display = "block";
+    }
+
+    function hideModeAlert() {
+      const el = document.getElementById("modeAlert");
+      if (el) el.style.display = "none";
+    }
+
     async function connectToDevice(selectedDevice) {
       const interfaces = dfu.findDeviceDfuInterfaces(selectedDevice);
       if (interfaces.length === 0) throw new Error("No DFU interface found — is the device in DFU mode?");
@@ -912,16 +931,27 @@
         log("Warning: could not read DFU descriptor — " + (e.message || e));
       }
 
-      // Set start address — Daisy bootloader QSPI starts at 0x90000000, skip first 256KB
-      if (device.memoryInfo) {
-        const seg = device.getFirstWritableSegment();
-        if (seg) {
-          device.startAddress = seg.start === 0x90000000 ? seg.start + 0x40000 : seg.start;
-          log("Memory: " + device.memoryInfo.name + " — start 0x" + device.startAddress.toString(16));
-        }
-      } else {
-        log("Warning: no memory map — flashing may fail.");
+      // Determine which mode the device came up in. The Daisy bootloader (CORRECT) exposes
+      // external QSPI flash at 0x90000000. The STM32 system bootloader / "DFU in FS Mode"
+      // (WRONG) exposes only internal flash at 0x08000000 — flashing this firmware there will
+      // stop the module from booting. Block it, tell the user how to fix it, and start over.
+      const writableSeg = device.memoryInfo ? device.getFirstWritableSegment() : null;
+      const inDaisyBootloader = !!(writableSeg && writableSeg.start === 0x90000000);
+
+      if (!inDaisyBootloader) {
+        try { await device.close(); } catch (e) {}
+        dfuDevice = null;
+        flashBtn.disabled = true;
+        flashFileBtn.disabled = true;
+        deviceInfo.textContent = "";
+        showModeAlert();
+        log("ERR:  Wrong mode — this is DFU mode, not Bootloader mode. See the instructions above.");
+        return;
       }
+
+      hideModeAlert();
+      device.startAddress = writableSeg.start + 0x40000; // skip first 256KB on QSPI
+      log("Memory: " + device.memoryInfo.name + " — start 0x" + device.startAddress.toString(16));
 
       // Wire up logging to our console
       device.logInfo     = msg => log("INFO: " + msg);
