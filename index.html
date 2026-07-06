@@ -181,13 +181,13 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
-      align-items: start;
+      align-items: stretch;
     }
 
     .col {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 20px;
-      align-content: start;
     }
 
     /* ── PANELS / CARDS ── */
@@ -461,6 +461,7 @@
       display: flex;
       flex-direction: column;
       position: relative;
+      flex: 1;
     }
 
     .console-wrap::before {
@@ -498,7 +499,7 @@
       white-space: pre-wrap;
       word-break: break-word;
       min-height: 200px;
-      max-height: 340px;
+      flex: 1;
       overflow-y: auto;
     }
 
@@ -676,17 +677,6 @@
           <p style="margin-top:8px;font-size:11px;color:var(--muted)">Flash diagnostics from this console are logged to help us support you if something goes wrong.</p>
         </div>
 
-        <!-- RECOVERY / BOOTLOADER CARD -->
-        <div class="card" style="border-color:var(--red-border-strong)">
-          <p class="card-title">Something Go Wrong When Flashing?</p>
-          <p class="panel-lead" style="margin-bottom:18px">
-            If your boot light isn't blinking the way it should, you can't get it to say
-            <b>Daisy Bootloader</b> when connecting, or you flashed and the module won't turn on now —
-            you may need to reflash the bootloader, then flash your firmware again.
-          </p>
-          <a href="./bootloader.html" class="btn btn-primary" style="display:inline-block;text-decoration:none">Reflash the Bootloader →</a>
-        </div>
-
       </div>
 
       <!-- RIGHT COL -->
@@ -741,18 +731,29 @@
           </div>
         </div>
 
-        <!-- TROUBLESHOOT CARD -->
-        <div class="card">
-          <p class="card-title">Troubleshooting</p>
-          <ul>
-            <li><b>Windows:</b> Install <i>WinUSB</i> driver via Zadig if the device doesn't appear.</li>
-            <li><b>Browser:</b> Must use Chrome or Edge on desktop over HTTPS. Safari &amp; Firefox are not supported.</li>
-            <li><b>Cable:</b> Use a direct USB port and a data-capable (not charge-only) cable.</li>
-            <li><b>Stuck in DFU?</b> Power-cycle the module and retry from step one.</li>
-          </ul>
-        </div>
-
       </div>
+    </div>
+
+    <!-- TROUBLESHOOT CARD (full width) -->
+    <div class="card" style="margin-top:20px">
+      <p class="card-title">Troubleshooting</p>
+      <ul>
+        <li><b>Windows:</b> Install <i>WinUSB</i> driver via Zadig if the device doesn't appear.</li>
+        <li><b>Browser:</b> Must use Chrome or Edge on desktop over HTTPS. Safari &amp; Firefox are not supported.</li>
+        <li><b>Cable:</b> Use a direct USB port and a data-capable (not charge-only) cable.</li>
+        <li><b>Stuck in DFU?</b> Power-cycle the module and retry from step one.</li>
+      </ul>
+    </div>
+
+    <!-- RECOVERY / BOOTLOADER CARD (full width) -->
+    <div class="card" style="margin-top:20px;border-color:var(--red-border-strong)">
+      <p class="card-title">Something Go Wrong When Flashing?</p>
+      <p class="panel-lead" style="margin-bottom:18px">
+        If your boot light isn't blinking the way it should, you can't get it to say
+        <b>Daisy Bootloader</b> when connecting, or you flashed and the module won't turn on now —
+        you may need to reflash the bootloader, then flash your firmware again.
+      </p>
+      <a href="./bootloader.html" class="btn btn-primary" style="display:inline-block;text-decoration:none">Reflash the Bootloader →</a>
     </div>
 
     <!-- FOOTER -->
