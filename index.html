@@ -657,6 +657,7 @@
             <button id="clearLogBtn" class="btn btn-ghost btn-tiny">Clear</button>
           </div>
           <pre id="log" aria-live="polite"></pre>
+          <p style="margin-top:8px;font-size:11px;color:var(--muted)">Flash diagnostics from this console are logged to help us support you if something goes wrong.</p>
         </div>
 
       </div>
@@ -869,6 +870,34 @@
     let transferSize = 1024;
     let manifestationTolerant = true;
 
+    // ── Diagnostics logging (Google Apps Script → Sheet) ──
+    const LOG_ENDPOINT = "https://script.google.com/macros/s/AKfycbxVIrVrhnjTjSReD4eHiynmqwYXSQhgyUTrbplNxW00NQjLffLHSaZHIjcM0ygTNLr4/exec";
+    const LOG_SECRET   = "90265483156987426581";
+    let connectedProduct = "";
+    let connectedMode    = "";
+
+    // Fire-and-forget: never let logging block or break a flash.
+    function sendFlashLog(result, version) {
+      try {
+        const body = JSON.stringify({
+          secret: LOG_SECRET,
+          clientTime: new Date().toISOString(),
+          product: connectedProduct,
+          version: version || "",
+          result: result || "",
+          mode: connectedMode || "",
+          log: logEl.textContent || "",
+          userAgent: navigator.userAgent || ""
+        });
+        fetch(LOG_ENDPOINT, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: body
+        }).catch(function () {});
+      } catch (e) { /* logging must never break a flash */ }
+    }
+
     async function fixInterfaceNames(usbDevice, interfaces) {
       if (interfaces.some(i => i.name == null)) {
         const temp = new dfu.Device(usbDevice, interfaces[0]);
@@ -941,6 +970,8 @@
       if (!inDaisyBootloader) {
         try { await device.close(); } catch (e) {}
         dfuDevice = null;
+        connectedProduct = selectedDevice.productName || "USB Device";
+        connectedMode = "DFU / system bootloader";
         flashBtn.disabled = true;
         flashFileBtn.disabled = true;
         deviceInfo.textContent = "";
@@ -967,6 +998,8 @@
       };
 
       dfuDevice = device;
+      connectedProduct = selectedDevice.productName || "USB Device";
+      connectedMode = "Daisy Bootloader";
       deviceInfo.textContent = "Connected: " + (selectedDevice.productName || "USB Device") +
         " — transfer size: " + transferSize + "B";
       log("Connected: " + (selectedDevice.productName || "USB Device"));
@@ -1021,12 +1054,14 @@
     }
 
     flashBtn.addEventListener("click", async () => {
+      let fwLabel = "";
       try {
         if (!manifest) throw new Error("Manifest not loaded");
         const ch  = channelSel.value;
         const idx = parseInt(versionSel.value || "0", 10);
         const fw  = ((manifest.channels || {})[ch] || [])[idx];
         if (!fw) throw new Error("No firmware selected");
+        fwLabel = fw.version || fw.file;
         log("Downloading " + fw.file + " ...");
         const res = await fetch("./" + fw.file, { cache: "no-store" });
         if (!res.ok) throw new Error("Firmware file not found (" + res.status + ")");
@@ -1038,11 +1073,13 @@
           log("Checksum verified.");
         }
         await flashArrayBuffer(buf);
+        sendFlashLog("success", fwLabel);
       } catch (e) {
         hideProgress();
         progressText.textContent = "";
         flashBtn.disabled = false;
         log("ERROR: " + (e.message || e));
+        sendFlashLog("fail", fwLabel);
       }
     });
 
@@ -1051,16 +1088,20 @@
     });
 
     flashFileBtn.addEventListener("click", async () => {
+      let fileLabel = "";
       try {
         const f = fileInput.files?.[0];
         if (!f) return;
+        fileLabel = f.name;
         log("Reading " + f.name + " ...");
         const buf = await f.arrayBuffer();
         await flashArrayBuffer(buf);
+        sendFlashLog("success", fileLabel);
       } catch (e) {
         hideProgress();
         progressText.textContent = "";
         log("ERROR: " + (e.message || e));
+        sendFlashLog("fail", fileLabel);
       }
     });
 
