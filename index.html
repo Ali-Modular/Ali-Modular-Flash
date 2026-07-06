@@ -870,6 +870,11 @@
     let transferSize = 1024;
     let manifestationTolerant = true;
 
+    // Daisy bootloader DFU exposes QSPI at 0x90000000; firmware always lives 256KB in.
+    // APP_ADDR is the ONE address we ever write firmware to — never derive it.
+    const QSPI_BASE = 0x90000000;
+    const APP_ADDR  = 0x90040000;
+
     // ── Diagnostics logging (Google Apps Script → Sheet) ──
     const LOG_ENDPOINT = "https://script.google.com/macros/s/AKfycbxVIrVrhnjTjSReD4eHiynmqwYXSQhgyUTrbplNxW00NQjLffLHSaZHIjcM0ygTNLr4/exec";
     const LOG_SECRET   = "90265483156987426581";
@@ -965,7 +970,7 @@
       // (WRONG) exposes only internal flash at 0x08000000 — flashing this firmware there will
       // stop the module from booting. Block it, tell the user how to fix it, and start over.
       const writableSeg = device.memoryInfo ? device.getFirstWritableSegment() : null;
-      const inDaisyBootloader = !!(writableSeg && writableSeg.start === 0x90000000);
+      const inDaisyBootloader = !!(writableSeg && writableSeg.start === QSPI_BASE);
 
       if (!inDaisyBootloader) {
         try { await device.close(); } catch (e) {}
@@ -981,7 +986,7 @@
       }
 
       hideModeAlert();
-      device.startAddress = writableSeg.start + 0x40000; // skip first 256KB on QSPI
+      device.startAddress = APP_ADDR; // hardcoded — the only address we flash firmware to
       log("Memory: " + device.memoryInfo.name + " — start 0x" + device.startAddress.toString(16));
 
       // Wire up logging to our console
@@ -1038,6 +1043,11 @@
     // ── FLASH ──
     async function flashArrayBuffer(buf) {
       if (!dfuDevice) throw new Error("No DFU device connected");
+      // Last line of defense: the destructive write itself verifies the target address.
+      if (dfuDevice.startAddress !== APP_ADDR) {
+        throw new Error("Refusing to flash: write target is 0x" +
+          (dfuDevice.startAddress >>> 0).toString(16) + ", expected 0x" + APP_ADDR.toString(16));
+      }
       flashBtn.disabled = true;
       flashFileBtn.disabled = true;
       setProgress(0, "Erasing");
