@@ -982,6 +982,7 @@
         deviceInfo.textContent = "";
         showModeAlert();
         log("ERR:  Wrong mode — this is DFU mode, not Bootloader mode. See the instructions above.");
+        sendFlashLog("wrong-mode", "");
         return;
       }
 
