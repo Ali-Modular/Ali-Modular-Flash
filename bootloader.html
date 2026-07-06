@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ALI Modular — Bootloader Recovery</title>
+  <meta name="description" content="Reinstall the Daisy bootloader on your Esu's Trifecta module via WebUSB DFU." />
+  <meta name="theme-color" content="#E8281A" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./app.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="https://alimodular.com" class="nav-logo" target="_blank" rel="noopener">
+      <img src="./assets/Ali-Modular_Color-Alt-Transparent.png" alt="ALI Modular" />
+      <span class="nav-logo-text">ALI Modular</span>
+    </a>
+    <div class="nav-right">
+      <a href="./index.html" class="nav-link">← Firmware Updater</a>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="wrap">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Recovery</span>
+      </div>
+      <h1 class="page-title">
+        Reflash <span>Bootloader</span>
+      </h1>
+      <p class="page-subtitle">Daisy Seed &nbsp;·&nbsp; WebUSB DFU &nbsp;·&nbsp; Chrome / Edge</p>
+    </div>
+
+    <div class="columns">
+
+      <!-- LEFT COL -->
+      <div class="col">
+
+        <!-- CONNECT PANEL -->
+        <div class="panel">
+          <span class="badge"><span class="badge-dot"></span>Bootloader Recovery</span>
+          <h2 class="panel-title">Step 1 — Reinstall Bootloader</h2>
+          <p class="panel-lead">
+            Use this only if your module won't boot, the boot light isn't blinking, or you can't get it
+            to say <b>Daisy Bootloader</b> when connecting. This reinstalls the Daisy bootloader, then you
+            go back and flash your firmware.
+          </p>
+          <p class="panel-lead" style="margin-bottom:24px">
+            Plug in your module and press <b>BOOT</b>, then click <b>Connect Device</b>. We'll check what
+            mode it's in — if it's in recovery (DFU) mode, the <b>Install</b> button below will unlock.
+            Use Chrome or Edge on desktop over HTTPS.
+          </p>
+          <div class="row">
+            <button id="connectBtn" class="btn btn-primary">Connect Device</button>
+          </div>
+          <div class="env-status" id="env"></div>
+          <div style="margin-top:8px"><span id="deviceInfo"></span></div>
+          <div id="modeAlert" style="display:none;margin-top:14px;padding:14px 16px;border:1px solid var(--red-border-strong);background:var(--red-glow);color:var(--off-white);font-size:13px;line-height:1.7"></div>
+
+          <div class="row" style="margin-top:22px">
+            <button id="installBtn" class="btn btn-primary" disabled>Install Daisy Bootloader</button>
+            <span id="progressText"></span>
+          </div>
+
+          <div id="progressWrap" style="display:none;margin-top:16px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span id="progressLabel" style="font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--red);">Working</span>
+              <span id="progressPct" style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--muted);">0%</span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.06);overflow:hidden;">
+              <div id="progressBar" style="height:100%;width:0%;background:var(--red);transition:width 0.15s ease;"></div>
+            </div>
+          </div>
+
+          <div id="doneWrap" style="display:none;margin-top:20px;padding:16px;border:1px solid var(--red-border-strong);background:var(--red-glow)">
+            <p style="margin-bottom:12px;color:var(--off-white);font-size:14px"><b>Bootloader installed.</b> Now power-cycle the module, re-enter Bootloader mode, and flash your firmware.</p>
+            <a href="./index.html" class="btn btn-primary" style="display:inline-block;text-decoration:none">Go Flash Firmware →</a>
+          </div>
+        </div>
+
+        <!-- CONSOLE -->
+        <div class="console-wrap">
+          <div class="console-head">
+            <span class="console-title">Console Output</span>
+            <button id="clearLogBtn" class="btn btn-ghost btn-tiny">Clear</button>
+          </div>
+          <pre id="log" aria-live="polite"></pre>
+          <p style="margin-top:8px;font-size:11px;color:var(--muted)">Recovery diagnostics from this console are logged to help us support you if something goes wrong.</p>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COL -->
+      <div class="col">
+        <div class="card">
+          <p class="card-title">How Recovery Works</p>
+          <ol>
+            <li>Plug in your module and press <b>BOOT</b>, then click <b>Connect Device</b>.</li>
+            <li>If we detect recovery (DFU) mode, click <b>Install Daisy Bootloader</b> and wait for it to finish.</li>
+            <li>Power-cycle the module.</li>
+            <li>Click <b>Go Flash Firmware</b> to return, then flash your firmware normally.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <p class="card-title">Notes</p>
+          <ul>
+            <li>Reinstalling the bootloader does <b>not</b> erase firmware stored in QSPI — it only restores the loader.</li>
+            <li>You can't damage the module doing this; the STM32 recovery mode is always available.</li>
+            <li>If we detect your bootloader is already working, we'll tell you — you can go straight back to flashing.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>© 2025 <a href="https://alimodular.com" target="_blank" rel="noopener">ALI Modular</a> — All flashing happens locally in your browser via WebUSB.</p>
+      <p><a href="./index.html">← Back to Firmware Updater</a></p>
+    </footer>
+
+  </div>
+
+  <!-- DFU LIBRARIES -->
+  <script src="./dfu/dfu.js"></script>
+  <script src="./dfu/dfuse.js"></script>
+  <script>
+  (function () {
+    const $ = (s) => document.querySelector(s);
+    const logEl       = $("#log");
+    const envEl       = $("#env");
+    const connectBtn  = $("#connectBtn");
+    const installBtn  = $("#installBtn");
+    const deviceInfo  = $("#deviceInfo");
+    const progressText= $("#progressText");
+    const progressWrap= $("#progressWrap");
+    const progressBar = $("#progressBar");
+    const progressLabel=$("#progressLabel");
+    const progressPct = $("#progressPct");
+    const clearLogBtn = $("#clearLogBtn");
+    const doneWrap    = $("#doneWrap");
+
+    const MAX_LOG = 500;
+    function log(msg) {
+      const ts = new Date().toLocaleTimeString();
+      logEl.textContent += "[" + ts + "] " + msg + "\n";
+      const lines = logEl.textContent.split("\n");
+      if (lines.length > MAX_LOG) logEl.textContent = lines.slice(-MAX_LOG).join("\n");
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    function setProgress(pct, label) {
+      progressWrap.style.display = "block";
+      progressBar.style.width = pct + "%";
+      progressPct.textContent = pct + "%";
+      if (label) progressLabel.textContent = label;
+    }
+    function hideProgress() { progressWrap.style.display = "none"; progressBar.style.width = "0%"; }
+    clearLogBtn.addEventListener("click", () => { logEl.textContent = ""; });
+
+    envEl.textContent = navigator.usb
+      ? "✓ WebUSB available — ready to connect."
+      : "✗ WebUSB not available. Open this page in Chrome or Edge on desktop over HTTPS.";
+    window.addEventListener("load", () => {
+      if (!window.dfu) envEl.textContent = "✗ DFU libraries failed to load.";
+    });
+
+    // ── Addresses ──
+    const BOOT_BASE = 0x08000000;              // STM32 internal flash (system bootloader)
+    const BOOT_END  = 0x08100000;
+    const QSPI_BASE = 0x90000000;              // Daisy bootloader QSPI
+    const BOOTLOADER_FILE = "./dsy_bootloader_v5.bin";
+
+    // ── Diagnostics logging (shared with the firmware page) ──
+    const LOG_ENDPOINT = "https://script.google.com/macros/s/AKfycbxVIrVrhnjTjSReD4eHiynmqwYXSQhgyUTrbplNxW00NQjLffLHSaZHIjcM0ygTNLr4/exec";
+    const LOG_SECRET   = "90265483156987426581";
+    let connectedProduct = "";
+    let connectedMode    = "";
+    function sendLog(result) {
+      try {
+        const body = JSON.stringify({
+          secret: LOG_SECRET,
+          clientTime: new Date().toISOString(),
+          product: connectedProduct,
+          version: "dsy_bootloader_v5",
+          result: result || "",
+          mode: connectedMode || "",
+          log: logEl.textContent || "",
+          userAgent: navigator.userAgent || ""
+        });
+        fetch(LOG_ENDPOINT, { method: "POST", mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" }, body: body }).catch(function () {});
+      } catch (e) { /* logging must never break recovery */ }
+    }
+
+    let dfuDevice = null;
+    let transferSize = 1024;
+    let manifestationTolerant = true;
+
+    function showAlert(html) {
+      const el = $("#modeAlert");
+      el.innerHTML = html; el.style.display = "block";
+    }
+    function hideAlert() { const el = $("#modeAlert"); el.style.display = "none"; }
+
+    async function fixInterfaceNames(usbDevice, interfaces) {
+      if (interfaces.some(i => i.name == null)) {
+        const temp = new dfu.Device(usbDevice, interfaces[0]);
+        await temp.device_.open();
+        await temp.device_.selectConfiguration(1);
+        const mapping = await temp.readInterfaceNames();
+        await temp.close();
+        for (let intf of interfaces) {
+          if (intf.name === null) {
+            const cfgIdx  = intf.configuration.configurationValue;
+            const intfNum = intf["interface"].interfaceNumber;
+            const alt     = intf.alternate.alternateSetting;
+            intf.name = mapping[cfgIdx][intfNum][alt];
+          }
+        }
+      }
+    }
+    function getDFUDescriptorProperties(device) {
+      return device.readConfigurationDescriptor(0).then(data => {
+        const configDesc = dfu.parseConfigurationDescriptor(data);
+        let funcDesc = null;
+        for (let desc of configDesc.descriptors) {
+          if (desc.bDescriptorType === 0x21 && desc.hasOwnProperty("bcdDFUVersion")) { funcDesc = desc; break; }
+        }
+        if (!funcDesc) return {};
+        return {
+          ManifestationTolerant: ((funcDesc.bmAttributes & 0x04) !== 0),
+          TransferSize:          funcDesc.wTransferSize,
+          DFUVersion:            funcDesc.bcdDFUVersion
+        };
+      }, () => ({}));
+    }
+
+    async function connectToDevice(selectedDevice) {
+      const interfaces = dfu.findDeviceDfuInterfaces(selectedDevice);
+      if (interfaces.length === 0) throw new Error("No DFU interface found — is the device in DFU mode?");
+      await fixInterfaceNames(selectedDevice, interfaces);
+
+      const settings = interfaces[0];
+      let device = new dfu.Device(selectedDevice, settings);
+      await device.open();
+      try {
+        const desc = await getDFUDescriptorProperties(device);
+        if (desc && desc.TransferSize) transferSize = desc.TransferSize;
+        if (desc && desc.ManifestationTolerant !== undefined) manifestationTolerant = desc.ManifestationTolerant;
+        if (desc && desc.DFUVersion === 0x011a && settings.alternate.interfaceProtocol === 0x02) {
+          await device.close();
+          device = new dfuse.Device(selectedDevice, settings);
+          await device.open();
+        }
+      } catch (e) { log("Warning: could not read DFU descriptor — " + (e.message || e)); }
+
+      device.logInfo    = msg => log("INFO: " + msg);
+      device.logWarning = msg => log("WARN: " + msg);
+      device.logError   = msg => log("ERR:  " + msg);
+      device.logDebug   = () => {};
+      device.logProgress = (done, total) => {
+        if (total) { setProgress(Math.floor((done / total) * 100), "Installing"); progressText.textContent = done + " / " + total + " bytes"; }
+      };
+
+      const writableSeg = device.memoryInfo ? device.getFirstWritableSegment() : null;
+      const segStart = writableSeg ? writableSeg.start : null;
+      const inSystemBootloader = segStart !== null && segStart >= BOOT_BASE && segStart < BOOT_END;
+      const inDaisyBootloader  = segStart === QSPI_BASE;
+
+      connectedProduct = selectedDevice.productName || "USB Device";
+
+      if (inSystemBootloader) {
+        dfuDevice = device;
+        dfuDevice.startAddress = BOOT_BASE;   // internal flash — where the bootloader lives
+        connectedMode = "DFU / system bootloader";
+        hideAlert();
+        deviceInfo.textContent = "Connected: recovery (DFU) mode — ready to reinstall the bootloader.";
+        log("Memory: " + device.memoryInfo.name + " — start 0x" + BOOT_BASE.toString(16));
+        log("Connected in recovery mode. Click \"Install Daisy Bootloader\".");
+        installBtn.disabled = false;
+        doneWrap.style.display = "none";
+      } else if (inDaisyBootloader) {
+        try { await device.close(); } catch (e) {}
+        dfuDevice = null;
+        connectedMode = "Daisy Bootloader";
+        installBtn.disabled = true;
+        deviceInfo.textContent = "Connected: Daisy Bootloader.";
+        showAlert("<b>Your bootloader is already working.</b><br>You don't need recovery — go back to the " +
+          "<a href='./index.html' style='color:var(--red)'>Firmware Updater</a> and flash your firmware normally.");
+        log("Daisy bootloader detected — recovery not needed.");
+      } else {
+        try { await device.close(); } catch (e) {}
+        dfuDevice = null;
+        connectedMode = "unknown";
+        installBtn.disabled = true;
+        deviceInfo.textContent = "";
+        showAlert("<b>Couldn't identify this device.</b><br>Make sure it's a Daisy Seed in DFU mode, then reconnect.");
+        log("ERR:  Unrecognized DFU device — no usable memory map.");
+      }
+    }
+
+    connectBtn.addEventListener("click", async () => {
+      try {
+        if (!window.dfu) throw new Error("DFU library not loaded");
+        const selected = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x0483 }] });
+        await connectToDevice(selected);
+      } catch (e) { log("ERROR connecting: " + (e.message || e)); }
+    });
+
+    installBtn.addEventListener("click", async () => {
+      try {
+        if (!dfuDevice) throw new Error("No device connected");
+        // Safety: only ever write the bootloader to internal flash 0x08000000.
+        if (dfuDevice.startAddress !== BOOT_BASE) {
+          throw new Error("Refusing to install: target is 0x" + (dfuDevice.startAddress >>> 0).toString(16) +
+            ", expected 0x" + BOOT_BASE.toString(16));
+        }
+        if (!confirm("This will reinstall the Daisy bootloader to your module. Keep it plugged in until it finishes. Continue?")) return;
+
+        installBtn.disabled = true;
+        connectBtn.disabled = true;
+        doneWrap.style.display = "none";
+        setProgress(0, "Downloading");
+        progressText.textContent = "";
+        log("Downloading bootloader (dsy_bootloader_v5.bin) ...");
+        const res = await fetch(BOOTLOADER_FILE, { cache: "no-store" });
+        if (!res.ok) throw new Error("Bootloader file not found (" + res.status + ")");
+        const buf = await res.arrayBuffer();
+
+        try {
+          const status = await dfuDevice.getStatus();
+          if (status.state === dfu.dfuERROR) await dfuDevice.clearStatus();
+        } catch (e) {}
+
+        setProgress(0, "Installing");
+        await dfuDevice.do_download(transferSize, buf, manifestationTolerant);
+        setProgress(100, "Done");
+        progressText.textContent = "";
+        log("Bootloader installed. Power-cycle the module, then flash your firmware.");
+        doneWrap.style.display = "block";
+        connectBtn.disabled = false;
+        sendLog("bootloader-install-success");
+      } catch (e) {
+        hideProgress();
+        progressText.textContent = "";
+        installBtn.disabled = false;
+        connectBtn.disabled = false;
+        log("ERROR installing bootloader: " + (e.message || e));
+        sendLog("bootloader-install-fail");
+      }
+    });
+  })();
+  </script>
+
+</body>
+</html>
