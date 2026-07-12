@@ -32,13 +32,19 @@
         "size_bytes": 340944,
         "sha256": "62b875a292439255c89f76832051f6469e22461a482bd7311e114fb6db821023",
         "notes": [
+          "NEW: Gain Screen — Input Gain added, Output Gain moved to Gain Screen",
+          "NEW: Knob Layout Screen in Settings — user-selectable knob layouts for the four-knob screen (1,2,3,4 / 2,1,4,3 / 1,3,2,4)",
           "NEW: Spring Reverb effect",
-          "NEW: DJ Filter effect",
+          "NEW: Wave Folder effect",
           "NEW: Vibrato effect",
-          "NEW: BBD effect",
-          "NEW: Wavefolder effect",
+          "NEW: BBD Delay effect",
+          "NEW: DJ Filter effect",
           "NEW: Comb Filter effect",
-          "Fixed: Factory Preset bug"
+          "4 Band EQ: totally refactored — proper RBJ biquad filters (low-shelf, peaking, high-shelf), bands now cascade in series, fixed gain model (±15dB, exactly flat at knob center)",
+          "Sweeper & Tape Deck: optimized — lower CPU usage",
+          "CERN: major internal cleanup",
+          "Studder: fixed marker placements",
+          "Fixed: Factory Presets bug"
         ]
       }
     ]
