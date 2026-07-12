@@ -26,11 +26,11 @@
     ],
     "beta": [
       {
-        "version": "1.19-beta-b5",
+        "version": "1.19-beta-b6",
         "date": "2026-07-12",
-        "file": "EsusTrifecta_1_19_B5.bin",
-        "size_bytes": 340944,
-        "sha256": "62b875a292439255c89f76832051f6469e22461a482bd7311e114fb6db821023",
+        "file": "EsusTrifecta_1_19_B6.bin",
+        "size_bytes": 340512,
+        "sha256": "731a304d51e5d04b826cf344e45743cfc3308b086157fcf9c4c4281c35ce91ca",
         "notes": [
           "NEW: Gain Screen — Input Gain added, Output Gain moved to Gain Screen",
           "NEW: Knob Layout Screen in Settings — user-selectable knob layouts for the four-knob screen (1,2,3,4 / 2,1,4,3 / 1,3,2,4)",
