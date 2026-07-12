@@ -26,6 +26,22 @@
     ],
     "beta": [
       {
+        "version": "1.19-beta-b5",
+        "date": "2026-07-12",
+        "file": "EsusTrifecta_1_19_B5.bin",
+        "size_bytes": 340944,
+        "sha256": "62b875a292439255c89f76832051f6469e22461a482bd7311e114fb6db821023",
+        "notes": [
+          "NEW: Spring Reverb effect",
+          "NEW: DJ Filter effect",
+          "NEW: Vibrato effect",
+          "NEW: BBD effect",
+          "NEW: Wavefolder effect",
+          "NEW: Comb Filter effect",
+          "Fixed: Factory Preset bug"
+        ]
+      },
+      {
         "version": "1.19-beta-b4",
         "date": "2026-04-21",
         "file": "EsusTrifecta_1_19_b4.bin",
