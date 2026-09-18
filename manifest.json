@@ -4,28 +4,6 @@
   "channels": {
     "stable": [
       {
-        "version": "1.19",
-        "date": "2026-09-18",
-        "file": "EsusTrifecta_1_19.bin",
-        "size_bytes": 340424,
-        "sha256": "4DDC7065ABB2E227C19D802237B1FA9FC84E9A92BBDFB1768B924365404CDD78",
-        "notes": [
-          "NEW: Spring Reverb effect",
-          "NEW: Wave Folder effect",
-          "NEW: Vibrato effect",
-          "NEW: BBD Delay effect",
-          "NEW: DJ Filter effect",
-          "NEW: Comb Filter effect",
-          "NEW: Gain Screen — Input Gain added, Output Gain moved to Gain Screen",
-          "NEW: Knob Layout Screen in Settings — user-selectable knob layouts for the four-knob screen (1,2,3,4 / 2,1,4,3 / 1,3,2,4)",
-          "4 Band EQ: totally refactored — proper RBJ biquad filters (low-shelf, peaking, high-shelf), bands now cascade in series, fixed gain model (±15dB, exactly flat at knob center)",
-          "Sweeper & Tape Deck: optimized — lower CPU usage",
-          "CERN: major internal cleanup",
-          "Studder: fixed marker placements",
-          "Fixed: Factory Presets bug"
-        ]
-      },
-      {
         "version": "1.18.0",
         "date": "2026-04-20",
         "file": "EsusTrifecta_1.18.bin",
@@ -47,6 +25,28 @@
       }
     ],
     "beta": [
+      {
+        "version": "1.19-beta-b6",
+        "date": "2026-07-12",
+        "file": "EsusTrifecta_1_19_B6.bin",
+        "size_bytes": 340512,
+        "sha256": "731a304d51e5d04b826cf344e45743cfc3308b086157fcf9c4c4281c35ce91ca",
+        "notes": [
+          "NEW: Gain Screen — Input Gain added, Output Gain moved to Gain Screen",
+          "NEW: Knob Layout Screen in Settings — user-selectable knob layouts for the four-knob screen (1,2,3,4 / 2,1,4,3 / 1,3,2,4)",
+          "NEW: Spring Reverb effect",
+          "NEW: Wave Folder effect",
+          "NEW: Vibrato effect",
+          "NEW: BBD Delay effect",
+          "NEW: DJ Filter effect",
+          "NEW: Comb Filter effect",
+          "4 Band EQ: totally refactored — proper RBJ biquad filters (low-shelf, peaking, high-shelf), bands now cascade in series, fixed gain model (±15dB, exactly flat at knob center)",
+          "Sweeper & Tape Deck: optimized — lower CPU usage",
+          "CERN: major internal cleanup",
+          "Studder: fixed marker placements",
+          "Fixed: Factory Presets bug"
+        ]
+      }
     ]
   }
 }
