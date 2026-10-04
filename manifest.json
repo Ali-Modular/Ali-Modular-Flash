@@ -26,6 +26,17 @@
     ],
     "beta": [
       {
+        "version": "1.19-beta-b7",
+        "date": "2026-10-04",
+        "file": "EsusTrifecta_1_19_B7.bin",
+        "size_bytes": 340512,
+        "sha256": "160D90E80E105BE7B73283D8A244496E08730B18F1D92F6999629720D457D8D3",
+        "notes": [
+          "To help catch possible issues in the field, Added code to check for NaN and Inf values being generated, and report them on the display",
+          "Updated compiler to C++17",
+        ]
+      },
+      {
         "version": "1.19-beta-b6",
         "date": "2026-07-12",
         "file": "EsusTrifecta_1_19_B6.bin",
