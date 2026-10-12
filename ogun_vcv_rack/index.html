@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ALI Modular — Ogun's Animator Pre-Review</title>
+  <meta name="description" content="Download the pre-review VCV Rack build of Ogun's Animator." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#E8281A" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── TOKENS ── */
+    :root {
+      --red:        #E8281A;
+      --red-dim:    #9B1A10;
+      --red-glow:   rgba(232, 40, 26, 0.15);
+      --red-border: rgba(232, 40, 26, 0.2);
+      --red-border-strong: rgba(232, 40, 26, 0.4);
+      --darker:  #060606;
+      --dark:    #0A0A0A;
+      --charcoal:#1A1A1A;
+      --card:    #111111;
+      --card2:   #0E0E0E;
+      --off-white: #E8E4DC;
+      --muted:   rgba(232, 228, 220, 0.45);
+      --futura: 'Rajdhani', 'Futura', 'Century Gothic', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--darker);
+      color: var(--off-white);
+      font-family: var(--futura);
+      font-weight: 400;
+      overflow-x: hidden;
+      cursor: crosshair;
+      min-height: 100vh;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(6, 6, 6, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--red-border);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .nav-logo img {
+      height: 38px;
+      width: auto;
+      display: block;
+    }
+
+    .nav-logo-text {
+      font-family: var(--futura);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.35em;
+      color: var(--off-white);
+      text-transform: uppercase;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-link {
+      font-family: var(--futura);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--off-white); }
+
+    /* ── PAGE WRAP ── */
+    .wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 112px 40px 60px;
+    }
+
+    /* ── HERO HEADER ── */
+    .page-header {
+      margin-bottom: 48px;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .eyebrow-line {
+      width: 32px;
+      height: 1px;
+      background: var(--red);
+    }
+
+    .eyebrow-text {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+
+    .page-title {
+      font-family: var(--futura);
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .page-title span { color: var(--red); }
+
+    .page-subtitle {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── GRID ── */
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    /* ── PANELS / CARDS ── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--red-border);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--red) 0%, transparent 60%);
+    }
+
+    .card {
+      background: var(--card2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 24px;
+      position: relative;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--red-border-strong) 0%, transparent 50%);
+    }
+
+    /* ── BADGE ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--red-glow);
+      border: 1px solid var(--red-border-strong);
+      color: var(--red);
+      padding: 5px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .badge-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--red);
+      border-radius: 50%;
+    }
+
+    /* ── TYPOGRAPHY ── */
+    .panel-title {
+      font-family: var(--futura);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: var(--off-white);
+    }
+
+    .panel-lead {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.65;
+      color: var(--muted);
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    .panel-lead b {
+      color: var(--off-white);
+      font-weight: 600;
+    }
+
+    .card-title {
+      font-family: var(--futura);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--off-white);
+      margin-bottom: 16px;
+    }
+
+    .body-text {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+      color: var(--off-white);
+    }
+
+    .body-text + .body-text { margin-top: 14px; }
+
+    .body-text a, .card li a, .panel-lead a {
+      color: var(--red);
+      text-decoration: none;
+    }
+    .body-text a:hover, .card li a:hover, .panel-lead a:hover { color: var(--off-white); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      appearance: none;
+      display: inline-block;
+      font-family: var(--futura);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      padding: 14px 28px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--red);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateX(-100%);
+      transition: transform 0.3s;
+    }
+    .btn-primary:hover::before { transform: translateX(0); }
+
+    /* ── LISTS ── */
+    .card ol, .card ul, .panel ol {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .card li, .panel li {
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.7;
+      letter-spacing: 0.03em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .card li b, .panel li b {
+      color: var(--off-white);
+      font-weight: 600;
+    }
+
+    .questions li {
+      font-size: 15px;
+      color: var(--off-white);
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+
+    .questions li::marker {
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    /* ── COMMAND ── */
+    code.cmd {
+      display: block;
+      margin: 8px 0 4px;
+      padding: 10px 14px;
+      background: #030303;
+      border: 1px solid var(--red-border);
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--off-white);
+      white-space: pre-wrap;
+      word-break: break-all;
+      user-select: all;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--red-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    footer p {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--red);
+      text-decoration: none;
+    }
+
+    footer a:hover { color: var(--off-white); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 16px 20px; }
+      .wrap { padding: 96px 20px 48px; }
+      .columns { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .nav-right .nav-link { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="https://alimodular.com" class="nav-logo" target="_blank" rel="noopener">
+      <img src="../assets/Ali-Modular_Color-Alt-Transparent.png" alt="ALI Modular" />
+      <span class="nav-logo-text">ALI Modular</span>
+    </a>
+    <div class="nav-right">
+      <a href="https://alimodular.com" class="nav-link" target="_blank" rel="noopener">alimodular.com</a>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="wrap">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Pre-Review</span>
+      </div>
+      <h1 class="page-title">
+        Ogun's <span>Animator</span>
+      </h1>
+      <p class="page-subtitle">Oscillator &nbsp;·&nbsp; VCV Rack 2 &nbsp;·&nbsp; Windows / macOS</p>
+    </div>
+
+    <!-- INTRO -->
+    <div class="card" style="margin-bottom:20px">
+      <p class="body-text">
+        Thank you for taking the time to explore our new oscillator, Ogun's Animator. We wanted to get some feedback from people before we start building the hardware, so we appreciate any feedback, or opinions, you might have. The feature set is mostly worked out, and the UI is coming along, but feel free to opine/comment on either. Along with your personal feedback, we've included a list of some questions we would like you to answer. As this is an upcoming product we ask that you don't share any information with anyone else.
+      </p>
+    </div>
+
+    <!-- DOWNLOADS -->
+    <div class="columns" style="margin-bottom:20px">
+
+      <!-- WINDOWS -->
+      <div class="panel">
+        <span class="badge"><span class="badge-dot"></span>Windows</span>
+        <h2 class="panel-title">Download for Windows</h2>
+        <p class="panel-lead">Installs the Ogun's Animator plugin into <b>VCV Rack 2</b>.</p>
+        <a href="./Oguns_Animator_VCV_Test_Installer_win.zip" class="btn btn-primary" download>Download for Windows</a>
+        <ol style="margin-top:24px">
+          <li>Unzip <b>Oguns_Animator_VCV_Test_Installer_win.zip</b>.</li>
+          <li>Run <b>Oguns Animator VCV Installer.exe</b>.</li>
+        </ol>
+      </div>
+
+      <!-- MACOS -->
+      <div class="panel">
+        <span class="badge"><span class="badge-dot"></span>macOS</span>
+        <h2 class="panel-title">Download for macOS</h2>
+        <p class="panel-lead">Since the installer is not signed, you will need a manual step in the Terminal to allow it to run.</p>
+        <a href="./Oguns_Animator_VCV_Test_Installer_macos.zip" class="btn btn-primary" download>Download for macOS</a>
+        <ol style="margin-top:24px">
+          <li>Download <b>Oguns_Animator_VCV_Test_Installer_macos.zip</b> — Safari will automatically extract the app during download (otherwise double-click the zip in Downloads).</li>
+          <li>Open <b>Terminal</b> and use the following command to allow it to run:<code class="cmd">xattr -d com.apple.quarantine ~/Downloads/"Oguns Animator VCV Installer.app"</code></li>
+          <li>You can now run <b>Oguns Animator VCV Installer</b>.</li>
+        </ol>
+      </div>
+
+    </div>
+
+    <!-- ABOUT -->
+    <div class="card" style="margin-bottom:20px">
+      <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1 1 360px">
+      <p class="body-text">
+        Coming up with an oscillator that is interesting, and novel, isn't an easy task, but we've given it a shot. One aspect is that Ogun's Animator has a lot of audio outputs, so you can process them in a variety of ways, giving you a wide selection of timbres. Internally the Wave Animator gives you interesting timbre possibilities, and the Amp Animator gives you a dynamic way to play with the interactions of the four oscillators from Core 1. The Resonator has some intriguing ways of exciting it, with some of them leaning into another level of synthesis.
+      </p>
+      <p class="body-text">
+        This software version is built for <a href="https://vcvrack.com/" target="_blank" rel="noopener">VCV Rack 2</a>, so you will need to install that first.
+      </p>
+      <p class="body-text">
+        For discussion of the module we have a private channel on our <a href="https://discord.gg/M9qKjzfhtp" target="_blank" rel="noopener">Discord server</a>, for which we will give you access to once you let us know you are interested in pre-reviewing Ogun's Animator.
+      </p>
+      </div>
+      <div style="flex:1 1 360px;position:relative;aspect-ratio:16/9">
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/OdApWJfGfcs?si=1mqGcQNOe1tkQjFy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>
+      </div>
+      </div>
+    </div>
+
+    <!-- QUESTIONS -->
+    <div class="panel">
+      <h2 class="panel-title" style="margin-bottom:20px">Questions</h2>
+      <ol class="questions" style="padding-left:24px">
+        <li>How long did it take to get your first sound you liked?</li>
+        <li>On a scale of 1–10, how fun was it to play with? Why?</li>
+        <li>Which control or feature did you keep coming back to?</li>
+        <li>Was there anything you expected to be fun that wasn't?</li>
+        <li>Did it ever surprise you in a good way? In a bad way?</li>
+        <li>Did it feel like it had its own character, or more like a general-purpose tool? Is that a good or bad thing for you?</li>
+        <li>Do you think the number of outputs is useful, or will rarely be used?</li>
+        <li>How did it sound across the frequency range (lows, mids, highs)? Any harshness, aliasing, or noise you didn't want?</li>
+        <li>Which CV inputs did you use most? Were any of them useless or confusing? Did it respond well to modulation, or was it twitchy or too subtle?</li>
+        <li>If you could change just one thing, what would it be?</li>
+      </ol>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>© 2026 <a href="https://alimodular.com" target="_blank" rel="noopener">ALI Modular</a> — Pre-review build. Please do not share.</p>
+      <p>Ogun's Animator for <a href="https://vcvrack.com/" target="_blank" rel="noopener">VCV Rack 2</a></p>
+    </footer>
+
+  </div>
+
+</body>
+</html>

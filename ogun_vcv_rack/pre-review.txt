@@ -1,0 +1,29 @@
+Ogun's Animator - Ali Modular - Pre-Review
+
+Thank you for taking the time to explore our new oscillator, Ogun's Animator. We wanted to get some feedback from people before we start building the hardware, so we appreciate any feedback, or opinions, you might have. The feature set is mostly worked out, and the UI is coming along, but feel free to opine/comment on either. Along with your personal feeback, we've included a list of some questions we would like you to answer. As this is an upcoming product we ask that you don't share any information with anyone else.
+
+Coming up with an oscillator that is interesting, and novel, isn't an easy task, but we've given it a shot. One aspect is that Ogun's Animator has a lot of audio outputs, so you can process them in a variety of ways, giving you a wide selection of timbres. Internally the Wave Animator gives you interesting timber possbilities, and the Amp Animator gives you a dynamic way to play with the interactions of the four oscillators from Core 1. The Resonator has some intriguing ways of exciting it, with some of them leaning into another level of synthesis.
+
+This software version is built for VCV Rack 2 (https://vcvrack.com/), so you will need to install that first.
+
+For discussion of the module we have a private channel on our Discord server (https://discord.gg/M9qKjzfhtp), for which we will give you access to once you let us know you are interested in pre-reviewing Ogun's Animator.
+
+1. How long did it take to get your first sound you liked?
+
+2. On a scale of 1–10, how fun was it to play with? Why?
+
+3. Which control or feature did you keep coming back to?
+
+4. Was there anything you expected to be fun that wasn't?
+
+5. Did it ever surprise you in a good way? In a bad way?
+
+6. Did it feel like it had its own character, or more like a general-purpose tool? Is that a good or bad thing for you?
+
+7. Do you think the number of outputs is useful, or will rarely be used?
+
+8. How did it sound across the frequency range (lows, mids, highs)? Any harshness, aliasing, or noise you didn't want?
+
+9. Which CV inputs did you use most? Were any of them useless or confusing? Did it respond well to modulation, or was it twitchy or too subtle?
+
+10. If you could change just one thing, what would it be?
