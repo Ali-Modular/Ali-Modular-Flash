@@ -457,6 +457,34 @@
 
     ul#notes li.note-heading:first-child { margin-top: 0; }
 
+    /* Collapsible sub-list inside a note */
+    ul#notes details {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+    ul#notes details summary {
+      font-size: inherit;
+      font-weight: inherit;
+      letter-spacing: inherit;
+      text-transform: none;
+      color: inherit;
+    }
+    ul#notes details summary::before { content: none; }
+    ul#notes details summary::after {
+      content: ' [+]';
+      color: var(--red);
+      font-size: 11px;
+    }
+    ul#notes details[open] summary::after { content: ' [−]'; }
+    ul#notes details ul {
+      margin: 4px 0 6px 0;
+      padding-left: 18px;
+      list-style: circle;
+    }
+    ul#notes details li { margin-bottom: 0; }
+
     /* ── SEPARATOR ── */
     .sep {
       border: none;
@@ -883,8 +911,21 @@
       if (!fw) return;
       (fw.notes || []).forEach(n => {
         const li = document.createElement("li");
+        // Notes given as { "text": "...", "items": [...] } get a collapsed sub-list
+        if (typeof n === "object" && n !== null) {
+          const det = document.createElement("details");
+          const sum = document.createElement("summary");
+          sum.textContent = n.text || "";
+          const sub = document.createElement("ul");
+          (n.items || []).forEach(s => {
+            const subLi = document.createElement("li");
+            subLi.textContent = s;
+            sub.appendChild(subLi);
+          });
+          det.append(sum, sub);
+          li.appendChild(det);
         // Notes starting with "## " are section headings (no bullet, italic)
-        if (n.startsWith("## ")) {
+        } else if (n.startsWith("## ")) {
           li.className = "note-heading";
           li.textContent = n.slice(3);
         } else {

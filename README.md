@@ -20,6 +20,15 @@ A branded WebUSB DFU flasher for Esu's Trifecta (Daisy Seed).
 3. Add a new entry under `stable` or `beta` in `manifest.json` with `version`, `date`, `file`, `size_bytes`, `sha256`, and `notes`.
 4. Deploy.
 
+### Release note formatting
+Each entry in `notes` is one of:
+- A plain string — shown as a bullet point.
+- A string starting with `## ` — shown as an italic section heading with no bullet, e.g. `"## Beta 7"`.
+- An object with `text` and `items` — shown as a bullet that expands to a collapsed sub-list:
+  ```json
+  { "text": "Fixed: crash with certain FX combos", "items": ["Combo 1", "Combo 2"] }
+  ```
+
 ## Windows driver (Zadig)
 If Windows can’t connect to “DFU in FS Mode”, install the WinUSB driver using Zadig:
 - Download Zadig from https://zadig.akeo.ie/
