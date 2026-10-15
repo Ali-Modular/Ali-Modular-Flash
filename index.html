@@ -447,6 +447,16 @@
       margin-bottom: 4px;
     }
 
+    ul#notes li.note-heading {
+      list-style: none;
+      margin-left: -16px;
+      margin-top: 10px;
+      font-style: italic;
+      color: var(--off-white);
+    }
+
+    ul#notes li.note-heading:first-child { margin-top: 0; }
+
     /* ── SEPARATOR ── */
     .sep {
       border: none;
@@ -873,7 +883,13 @@
       if (!fw) return;
       (fw.notes || []).forEach(n => {
         const li = document.createElement("li");
-        li.textContent = n;
+        // Notes starting with "## " are section headings (no bullet, italic)
+        if (n.startsWith("## ")) {
+          li.className = "note-heading";
+          li.textContent = n.slice(3);
+        } else {
+          li.textContent = n;
+        }
         notesUl.appendChild(li);
       });
     }
